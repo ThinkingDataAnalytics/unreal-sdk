@@ -1,0 +1,329 @@
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <buildGradleAdditions>
+        <insert>
+            dependencies {
+                implementation 'cn.thinkingdata.android:ThinkingAnalyticsSDK:2.7.0'
+            }
+        </insert>
+    </buildGradleAdditions>
+    <androidManifestUpdates>
+        <addPermission android:name="android.permission.INTERNET" />
+        <addPermission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    </androidManifestUpdates>
+    <gameActivityImportAdditions>
+        <insert>
+            import android.app.Application;
+            import android.text.TextUtils;
+            import cn.thinkingdata.android.*;
+            import java.util.TimeZone;
+            import org.json.JSONObject;
+            import android.text.TextUtils;
+            import cn.thinkingdata.android.utils.TDLog;
+            import java.util.Map;
+            import java.util.List;
+            import java.util.Iterator;
+        </insert>
+    </gameActivityImportAdditions>
+    <gameActivityClassAdditions>
+        <insert>
+
+            static Map sInstances = new HashMap();
+            static ArrayList sAppIds = new ArrayList();
+            
+            public static ThinkingAnalyticsSDK taGetCurrentInstance(String appid) {
+                
+                if (appid.length()>0){
+                    if (sInstances.containsKey(appid)) {
+                        return (ThinkingAnalyticsSDK)sInstances.get(appid);
+                    }
+                } else if (sAppIds.size() >0 ){
+                    String appid1 = (String)sAppIds.get(0);
+                    if (sInstances.containsKey(appid1)) {
+                        return (ThinkingAnalyticsSDK)sInstances.get(appid1);
+                    }
+                }
+                return null;
+            }
+                
+            public String taGetCurrentAppId(String appid) {
+                if (appid.length()>0){
+                    return appid;
+                } else if (sAppIds.size() >0 ){
+                    return (String)sAppIds.get(0);
+                } else {
+                    return "";
+                }
+            }
+            
+            public void taInitialize(String appId, String serverUrl, int mode, String timeZone, String version) {
+            
+                ThinkingAnalyticsSDK mInstance = (ThinkingAnalyticsSDK)sInstances.get(appId);
+                if (mInstance == null) {
+                    ThinkingAnalyticsSDK.setCustomerLibInfo("Unreal", version);
+                    TDConfig config = TDConfig.getInstance((Application) getApplicationContext(), appId, serverUrl);
+                    config.setModeInt(mode);
+                    if (!TextUtils.isEmpty(timeZone)) {
+                        config.setDefaultTimeZone(TimeZone.getTimeZone(timeZone));
+                    
+                    }
+                    mInstance = ThinkingAnalyticsSDK.sharedInstance(config);
+                    sInstances.put(appId, mInstance);
+                    sAppIds.add(appId);
+                }
+            }
+            
+            private static final int TA_USER_SET = 0;
+            private static final int TA_USER_SET_ONCE = 1;
+            private static final int TA_USER_APPEND = 2;
+            private static final int TA_USER_UNSET = 3;
+            private static final int TA_USER_ADD = 4;
+            
+            
+            public JSONObject taCombineJson(String properties, String dyldProperties) {
+            
+                JSONObject json = new JSONObject();
+                JSONObject propertiesObj = null;
+                JSONObject dyldpropertiesObj = null;
+                
+                try {
+                    propertiesObj = new JSONObject(properties);
+                } catch(Exception e) {
+                    // ignore
+                }
+                
+                try {
+                    dyldpropertiesObj = new JSONObject(dyldProperties);
+                } catch(Exception e) {
+                    // ignore
+                }
+                
+                if (dyldpropertiesObj != null) {
+                    Iterator iter = dyldpropertiesObj.keys();
+                    while (iter.hasNext()) {
+                        String key = (String) iter.next();
+                        try {
+                            json.put(key, dyldpropertiesObj.get(key));
+                        } catch(Exception e) {
+                            // ignore
+                        }
+                        
+                    }
+                }
+                
+                if (propertiesObj != null) {
+                    Iterator iter = propertiesObj.keys();
+                    while (iter.hasNext()) {
+                        String key = (String) iter.next();
+                        try {
+                            json.put(key, propertiesObj.get(key));
+                        } catch(Exception e) {
+                            // ignore
+                        }
+                        
+                    }
+                }
+                
+                return json;
+            }
+            
+            public void taTrack(String eventName, String properties, String dyldProperties, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.track(eventName, taCombineJson(properties, dyldProperties));
+                }
+            }
+            
+            public void taTrackFirst(String eventName, String properties, String firstCheckId, String dyldProperties, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    TDFirstEvent event = new TDFirstEvent(eventName, taCombineJson(properties, dyldProperties));
+                    if (TextUtils.isEmpty(firstCheckId)) {
+                        mInstance.track(event);
+                    } else {
+                        event.setFirstCheckId(firstCheckId);
+                        mInstance.track(event);
+                    }
+                }
+            }
+
+            public void taTrackUpdate(String eventName, String properties, String eventId, String dyldProperties,String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.track(new TDUpdatableEvent(eventName, taCombineJson(properties, dyldProperties), eventId));
+                }
+            }
+
+            public void taTrackOverwrite(String eventName, String properties, String eventId, String dyldProperties, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.track(new TDOverWritableEvent(eventName, taCombineJson(properties, dyldProperties), eventId));
+                }
+            }
+
+            public void taUserOperations(int type, String properties, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    if (TA_USER_UNSET == type) {
+                        mInstance.user_unset(properties);
+                        return;
+                    }
+                    
+                    JSONObject propertiesObj = null;
+                    try {
+                        propertiesObj = new JSONObject(properties);
+                    } catch(Exception e) {
+                        // ignore
+                    }
+                    if (TA_USER_SET == type) {
+                        mInstance.user_set(propertiesObj);
+                    } else if (TA_USER_SET_ONCE == type) {
+                        mInstance.user_setOnce(propertiesObj);
+                    } else if (TA_USER_APPEND == type) {
+                        mInstance.user_append(propertiesObj);
+                    } else if (TA_USER_ADD == type) {
+                        mInstance.user_add(propertiesObj);
+                    }
+                }
+            }
+            
+            public void taTimeEvent(String eventName, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.timeEvent(eventName);
+                }
+            }
+
+            public void taUserDelete(String appid) {
+            ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.user_delete();
+                }
+            }
+            
+            public void taLogin(String accountId, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.login(accountId);
+                }
+            }
+            public void taIdentify(String distinctId, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.identify(distinctId);
+                }
+            }
+            
+            public void taLogout(String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.logout();
+                }
+            }
+            
+            public void taFlush(String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.flush();
+                }
+            }
+            
+            public void taEnableAutoTrack(String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    // START, END, INSTALL
+                    mInstance.enableAutoTrack(35);
+                }
+            }
+            
+            public void taOptOutTracking(String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.optOutTracking();
+                }
+            }
+            
+            public void taOptInTracking(String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.optInTracking();
+                }
+            }
+            
+            public void taEnableTracking(boolean enabled, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.enableTracking(enabled);
+                }
+            }
+
+            public String taGetDistinctId(String appid)
+            {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                 if (null != mInstance) {
+                    return mInstance.getDistinctId();
+                }
+                return "";
+            }
+
+            public String taGetDeviceId(String appid)
+            {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                 if (null != mInstance) {
+                    return mInstance.getDeviceId();
+                }
+                return "";
+            }
+
+            public void taCalibrateTimeWithNtp(String ntpServer)
+            {
+                ThinkingAnalyticsSDK.calibrateTimeWithNtp(ntpServer);
+            }
+            
+            public void taSetSuperProperties(String properties, String appid)
+            {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    JSONObject propertiesObj = null;
+                    try {
+                        propertiesObj = new JSONObject(properties);
+                    } catch(Exception e) {
+                        // ignore
+                    }
+                    mInstance.setSuperProperties(propertiesObj);
+               }
+            }
+            
+            public String taGetSuperProperties(String appid)
+            {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    JSONObject properties1 =  mInstance.getSuperProperties();
+                    return properties1.toString();
+                }
+               return "";
+            }
+            
+            
+            public String taGetPresetProperties(String appid)
+            {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    TDPresetProperties presetProperties = mInstance.getPresetProperties();
+                    JSONObject properties = presetProperties.toEventPresetProperties();
+                    return properties.toString();
+               }
+               return "";
+            }
+            
+            public String taCreateLightInstance(String appid)
+            {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid).createLightInstance();
+                String token =  UUID.randomUUID().toString();
+                sInstances.put(token,mInstance);
+                return token;
+            }
+            
+        </insert>
+    </gameActivityClassAdditions>
+</root>
