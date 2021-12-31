@@ -1,8 +1,0 @@
-{
-	"SourceFiles": [
-		"/Users/halewang/Desktop/SDK/UE4/TAExample/Source/TAExample/TAExample.Build.cs",
-		"/Users/halewang/Desktop/SDK/UE4/TAExample/Source/TAExample.Target.cs",
-		"/Users/halewang/Desktop/SDK/UE4/TAExample/Source/TAExampleEditor.Target.cs"
-	],
-	"EngineVersion": "4.25.4"
-}

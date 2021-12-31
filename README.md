@@ -4,7 +4,7 @@
 
 ThinkingAnalytics 实现了游戏引擎内置的 Analytics 服务，同时也支持直接通过 C++ 代码调用接口上报数据。
 
-目前只支持 Android 和 iOS 平台。
+目前支持 Android、iOS、Windows和MacOS平台。
 
 ### 1 集成 SDK
 1.1 下载 [Unreal SDK ](http://download.thinkingdata.cn/client/release/ta_unreal_sdk.zip)，解压后将 `ThinkingAnalytics` 放入您项目的 `Plugins` 目录； 如果 `Plugins` 目录不存在，首先在项目根目录下创建 `Plugins` 目录，然后将 `ThinkingAnalytics` 目录放入其中。
@@ -237,7 +237,7 @@ SDK 的停止状态也将保存在本地缓存，直到调用 OptInTracking，�
 ThinkingAnalyticsAPI.OptInTracking();
 ```
 
-6.4 设置公共事件属性
+6.6 设置公共事件属性
 
 在 v1.3.0 版本新增设置公共事件属性, 对于一些重要的属性，譬如用户的会员等级、来源渠道等，这些属性需要设置在每个事件中，此时您可以将这些属性设置为公共事件属性。公共事件属性指的就是每个事件都会带有的属性。我们推荐您在发送事件前，先设置公共事件属性。
 ```cpp
@@ -249,7 +249,7 @@ UThinkingAnalytics::SetSuperProperties("{\"static_property1\":\"value1\",\"stati
 FString SuperProperties = UThinkingAnalytics::GetSuperProperties();
 ```
 
-6.5 设置动态公共属性
+6.7 设置动态公共属性
 
 在 v1.3.0 版本新增设置动态公共属性, 在设置动态公共属性类之后，SDK 将在上报事件属性时自动执行并获取返回值中的属性，并添加到每个事件中。
 ```cpp
@@ -264,7 +264,7 @@ void UMyDemoWidget::callSetDynamicSuperPropertiesFunction(){
 }
 ```
 
-6.6 获取预制属性
+6.8 获取预制属性
 
 在 v1.3.0 版本新增预获取制属性接口, SDK 会在事件属性上报时候自动加上一些内置属性, 您可以通过此接口获取预置属性。
 ```cpp

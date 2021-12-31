@@ -1,32 +1,17 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+release
+.DS_Store
+TAUnrealDemo/.DS_Store
+TAUnrealDemo/Binaries
+TAUnrealDemo/Intermediate
+TAUnrealDemo/Plugins/ThinkingAnalytics/Binaries
+TAUnrealDemo/Plugins/ThinkingAnalytics/Intermediate
+TAUnrealDemo/Saved/SaveGames
+MacNoEditor
+TAUnrealDemo/MacNoEditor
+TAUnrealDemo/Saved/Cooked
+TAUnrealDemo/Saved/MaterialStats
+TAUnrealDemo/Saved/MaterialStatsDebug
+TAUnrealDemo/Saved/Shaders
+TAUnrealDemo/Saved/StagedBuilds
+TAUnrealDemo/Saved/Temp
+TAUnrealDemo/Build
