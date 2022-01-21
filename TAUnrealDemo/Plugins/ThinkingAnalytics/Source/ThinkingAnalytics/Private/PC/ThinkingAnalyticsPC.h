@@ -29,7 +29,7 @@ class UThinkingAnalyticsPC : public UObject
 
 GENERATED_UCLASS_BODY()
 
-void ObtainEventInfoAndDoPost(const FString& EventName, const FString& Properties, const FString& DynamicProperties, const FString& EventType, const FString& AddProperties);
+void ObtainEventInfoAndDoPost(const FString& EventName, const FString& Properties, const FString& DynamicProperties, const FString& EventType, const FString& AddProperties, const TSharedPtr<FJsonObject> m_PresetPropertiesJsonObject);
 
 public:
 
@@ -85,6 +85,7 @@ public:
 
 	void TrackOverwrite(const FString& EventName, const FString& Properties, const FString& EventId, const FString& DynamicProperties);
 
+	friend class HandleAutoDeleteAsyncTask;
 private:
 
 	TAMode InstanceMode;
@@ -100,16 +101,12 @@ private:
 	FString m_LibVersion;
 
 	FString m_SuperProperties;
-
-	TSharedPtr<FJsonObject> m_PresetPropertiesJsonObject;
-
+	
 	bool m_EnableTrack;
 
 	~UThinkingAnalyticsPC();
 
 	UTASaveGame* ReadValue();
-
-	void InitPresetProperties();
 
 	void SaveValue(UTASaveGame *SaveGame);
 
@@ -117,5 +114,6 @@ private:
 
 	void Init(const FString& AppID, const FString& ServerUrl, TAMode Mode, FString Version);
 
+	TSharedPtr<FJsonObject> GetPresetPropertiesJsonObject();
 
 };	
