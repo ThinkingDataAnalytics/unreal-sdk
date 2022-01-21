@@ -27,9 +27,21 @@ void FRequestHelper::CallHttpRequest(const FString& ServerUrl, const FString& Da
     Request->OnProcessRequestComplete().BindRaw(this, &FRequestHelper::RequestComplete);
     Request->ProcessRequest();
 }
-
+template<typename T>
+struct Scope
+{
+	T *mThis;
+	Scope(T *This):mThis(This)
+	{
+	}
+	~Scope()
+	{
+		delete mThis;
+	}
+};
 void FRequestHelper::RequestComplete(FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool IsSuccess)
 {
+	Scope<FRequestHelper> _(this);
 	FTALog::Warning(CUR_LOG_POSITION, TEXT("is success = ") + (UKismetStringLibrary::Conv_BoolToString(IsSuccess)));
     FTALog::Warning(CUR_LOG_POSITION, TEXT("is responseCode = ") + (FString::FromInt(ResponsePtr->GetResponseCode())));
     FTALog::Warning(CUR_LOG_POSITION, TEXT("is content = ") + (ResponsePtr->GetContentAsString()));
