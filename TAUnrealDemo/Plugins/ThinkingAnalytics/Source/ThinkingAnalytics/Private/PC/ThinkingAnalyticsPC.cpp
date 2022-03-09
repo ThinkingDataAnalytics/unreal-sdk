@@ -11,15 +11,18 @@ class HandleAutoDeleteAsyncTask : public FNonAbandonableTask
     FString EventType;
 	FString AddProperties;
 	UThinkingAnalyticsPC* m_Instance;
+	TSharedPtr<FJsonObject> PresetPropertiesJsonObject;
 
     HandleAutoDeleteAsyncTask(const FString& InEventName, const FString& InProperties, const FString& InDynamicProperties, const FString& InEventType, const FString& InAddProperties, UThinkingAnalyticsPC *Instance)
     	: EventName(InEventName), Properties(InProperties), DynamicProperties(InDynamicProperties), EventType(InEventType), AddProperties(InAddProperties), m_Instance(Instance)
     {
+    	PresetPropertiesJsonObject = m_Instance->GetPresetPropertiesJsonObject();
     }
 
    	HandleAutoDeleteAsyncTask(const FString& InEventType, const FString& InProperties, UThinkingAnalyticsPC *Instance)
         : Properties(InProperties), EventType(InEventType), m_Instance(Instance)
     {
+    	PresetPropertiesJsonObject = m_Instance->GetPresetPropertiesJsonObject();
     }
 
     void DoWork()
@@ -31,7 +34,7 @@ class HandleAutoDeleteAsyncTask : public FNonAbandonableTask
         }
 	    else
 	    {
-            m_Instance->ObtainEventInfoAndDoPost(EventName, Properties, DynamicProperties, EventType, AddProperties);
+            m_Instance->ObtainEventInfoAndDoPost(EventName, Properties, DynamicProperties, EventType, AddProperties, PresetPropertiesJsonObject);
         }
     }
 
@@ -78,7 +81,6 @@ void UThinkingAnalyticsPC::Initialize(const FString& AppID, const FString& Serve
 		Instance->m_AccountID = Instance->m_SaveGame->m_AccountID;
 		Instance->m_SuperProperties = Instance->m_SaveGame->m_SuperProperties;
 		Instance->m_SaveGame->AddToRoot();
-		Instance->InitPresetProperties();
 		Instance->m_EnableTrack = true;
 
 		FTALog::Warning(CUR_LOG_POSITION, TEXT("UThinkingAnalyticsPC Initialize Success !"));
@@ -104,13 +106,28 @@ void UThinkingAnalyticsPC::Init(const FString& AppID, const FString& ServerUrl, 
 	this->m_LibVersion = Version;
 }
 
+TSharedPtr<FJsonObject> UThinkingAnalyticsPC::GetPresetPropertiesJsonObject()
+{
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+	JsonObject->SetStringField(FTAConstants::KEY_LIB_VERSION, this->m_LibVersion);
+	JsonObject->SetNumberField(FTAConstants::KEY_SCREEN_WIDTH, FTAUtils::GetScreenWidth());
+	JsonObject->SetNumberField(FTAConstants::KEY_SCREEN_HEIGHT, FTAUtils::GetScreenHeight());
+	JsonObject->SetStringField(FTAConstants::KEY_OS, FTAUtils::GetOS());
+	JsonObject->SetStringField(FTAConstants::KEY_OS_VERSION, FTAUtils::GetOSVersion());
+	JsonObject->SetStringField(FTAConstants::KEY_APP_VERSION, FTAUtils::GetProjectVersion());
+	JsonObject->SetStringField(FTAConstants::KEY_DEVICE_ID, ta_GetDeviceID());
+	JsonObject->SetNumberField(FTAConstants::KEY_ZONE_OFFSET, FTAUtils::GetZoneOffset());
+	JsonObject->SetStringField(FTAConstants::KEY_SYSTEM_LANGUAGE, FTAUtils::GetSystemLanguage());
+	return JsonObject;
+}
+
 void UThinkingAnalyticsPC::Track(const FString& EventName, const FString& Properties, const FString& DynamicProperties)
 {
 	FTALog::Warning(CUR_LOG_POSITION, TEXT("Track param: ") + this->InstanceAppID + TEXT(". ") + this->InstanceServerUrl);
 	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK), TEXT(""), this))->StartBackgroundTask();
 }
 
-void UThinkingAnalyticsPC::ObtainEventInfoAndDoPost(const FString& EventName, const FString& Properties, const FString& DynamicProperties, const FString& EventType, const FString& AddProperties)
+void UThinkingAnalyticsPC::ObtainEventInfoAndDoPost(const FString& EventName, const FString& Properties, const FString& DynamicProperties, const FString& EventType, const FString& AddProperties, const TSharedPtr<FJsonObject> PresetPropertiesJsonObject)
 {
 	TSharedPtr<FJsonObject> m_PropertiesJsonObject = MakeShareable(new FJsonObject);
 	TSharedPtr<FJsonObject> m_DataJsonObject = MakeShareable(new FJsonObject);
@@ -120,9 +137,9 @@ void UThinkingAnalyticsPC::ObtainEventInfoAndDoPost(const FString& EventName, co
 		FTALog::Warning(CUR_LOG_POSITION, TEXT("event name[ ") + EventName + TEXT(" ] is not valid !"));
 	}
 
-	if ( m_PresetPropertiesJsonObject.IsValid() )
+	if ( PresetPropertiesJsonObject.IsValid() )
     {
-		for (auto& Elem : m_PresetPropertiesJsonObject->Values)
+		for (const auto& Elem : PresetPropertiesJsonObject->Values)
     	{
 			m_PropertiesJsonObject->SetField(Elem.Key, Elem.Value);
 		}
@@ -465,22 +482,8 @@ FString UThinkingAnalyticsPC::ta_GetPresetProperties()
 {
 	FString SuperProperties;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SuperProperties);
-	FJsonSerializer::Serialize(m_PresetPropertiesJsonObject.ToSharedRef(), Writer);
+	FJsonSerializer::Serialize(GetPresetPropertiesJsonObject().ToSharedRef(), Writer);
 	return SuperProperties;
-}
-
-void UThinkingAnalyticsPC::InitPresetProperties()
-{
-	m_PresetPropertiesJsonObject = MakeShareable(new FJsonObject);
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_LIB_VERSION, this->m_LibVersion);
-	m_PresetPropertiesJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_WIDTH, FTAUtils::GetScreenWidth());
-	m_PresetPropertiesJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_HEIGHT, FTAUtils::GetScreenHeight());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_OS, FTAUtils::GetOS());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_OS_VERSION, FTAUtils::GetOSVersion());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_APP_VERSION, FTAUtils::GetProjectVersion());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_DEVICE_ID, ta_GetDeviceID());
-	m_PresetPropertiesJsonObject->SetNumberField(FTAConstants::KEY_ZONE_OFFSET, FTAUtils::GetZoneOffset());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_SYSTEM_LANGUAGE, FTAUtils::GetSystemLanguage());
 }
 
 void UThinkingAnalyticsPC::EnableTracking(bool EnableTrack)
