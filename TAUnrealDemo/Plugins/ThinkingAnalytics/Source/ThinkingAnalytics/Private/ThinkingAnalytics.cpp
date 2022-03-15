@@ -9,6 +9,8 @@
 
 #include "ThinkingAnalyticsSettings.h"
 #include "Interfaces/IPluginManager.h"
+#include "Common/TAConstants.h"
+
 #if PLATFORM_ANDROID
 #include "./Android/ThinkingAnalyticsJNI.h"
 #elif PLATFORM_IOS
@@ -71,13 +73,34 @@ void UThinkingAnalytics::InitializeInstance(const FString& appid, const FString&
 #endif
 }
 
-void UThinkingAnalytics::EnableAutoTrack(const FString& AppId) 
+void UThinkingAnalytics::EnableAutoTrack(const FString& AppId)
 {
-
 #if PLATFORM_ANDROID
     thinkinganalytics::jni_ta_enable_autotrack(AppId);
 #elif PLATFORM_IOS
     ThinkingAnalyticsCpp::ta_enable_autotrack(AppId);
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Calling UThinkingAnalytics::EnableAutoTrack... The platform is not supported."));
+#endif
+}
+
+void UThinkingAnalytics::EnableAutoTrackWithType(const TArray<FString>& EventTypeList, const FString& AppId)
+{
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_enable_autotrack_with_type(AppId, EventTypeList);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_enable_autotrack_with_type(AppId, EventTypeList);
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Calling UThinkingAnalytics::EnableAutoTrack... The platform is not supported."));
+#endif
+}
+
+void UThinkingAnalytics::EnableAutoTrackWithTypeAndProperties(const TArray<FString>& EventTypeList, const FString& Properties, const FString& AppId)
+{
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_enable_autotrack_with_type_and_prop(AppId, EventTypeList, Properties);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_enable_autotrack_with_type_and_prop(AppId, EventTypeList, Properties);
 #else
     UE_LOG(ThinkingAnalytics, Warning, TEXT("Calling UThinkingAnalytics::EnableAutoTrack... The platform is not supported."));
 #endif

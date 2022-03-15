@@ -2,9 +2,9 @@
 #pragma once
 
 #include "TASaveGame.h"
-#include "TAUtils.h"
-#include "TALog.h"
-#include "TAConstants.h"
+#include "../Common/TAUtils.h"
+#include "../Common/TALog.h"
+#include "../Common/TAConstants.h"
 #include "RequestHelper.h"
 #include "ThinkingAnalyticsSettings.h"
 
@@ -101,7 +101,7 @@ private:
 
 	FString m_SuperProperties;
 
-	TSharedPtr<FJsonObject> m_PresetPropertiesJsonObject;
+	FString m_PresetProperties;
 
 	bool m_EnableTrack;
 

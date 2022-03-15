@@ -41,6 +41,50 @@ void UTAUserWidget::Call_TA_TrackEvent_With_Prop(){
     UThinkingAnalytics::Track("TEST_EVENT", TEXT("{\"key1\":\"打劫\"}"), AppID);
 }
 
+// 循环上报10000条
+void UTAUserWidget::Call_TA_TrackEvent_10000(){
+    for (int i = 0; i < 10000; ++i)
+    {
+        UThinkingAnalytics::Track("TEST_EVENT", TEXT("{\"key1\":\"打劫\"}"), AppID);
+    }
+}
+
+// 上报复杂类型数据
+void UTAUserWidget::Call_TA_TrackEvent_Complex(){
+    TSharedPtr<FJsonObject> m_DataJsonObject = MakeShareable(new FJsonObject);
+    m_DataJsonObject->SetStringField(TEXT("stringKey"), TEXT("string value"));
+    m_DataJsonObject->SetBoolField(TEXT("boolKey"), true);
+    m_DataJsonObject->SetNumberField(TEXT("intKey"), 12);
+    m_DataJsonObject->SetNumberField(TEXT("doubleKey"), 12.34);
+    m_DataJsonObject->SetStringField(TEXT("dateKey"), FDateTime::Now().ToString());
+
+    TSharedPtr<FJsonObject> m_DataJsonObject2 = MakeShareable(new FJsonObject);
+    m_DataJsonObject2->SetStringField(TEXT("stringKey"), TEXT("string value"));
+    m_DataJsonObject2->SetBoolField(TEXT("boolKey"), true);
+    m_DataJsonObject2->SetNumberField(TEXT("intKey"), 12);
+    m_DataJsonObject2->SetNumberField(TEXT("doubleKey"), 12.34);
+    m_DataJsonObject2->SetStringField(TEXT("dateKey"), FDateTime::Now().ToString());
+
+    TArray< TSharedPtr<FJsonValue> > DataArray;
+    TSharedPtr<FJsonValueObject> JsonDataValue = MakeShareable(new FJsonValueObject(m_DataJsonObject2));
+    TSharedPtr<FJsonValue> NumberValue = MakeShareable(new FJsonValueNumber(222));
+    DataArray.Add(JsonDataValue);
+    DataArray.Add(NumberValue);
+    TSharedPtr<FJsonValue> StringValue = MakeShareable(new FJsonValueString(TEXT("string value")));
+    DataArray.Add(StringValue);
+    TSharedPtr<FJsonValue> Date = MakeShareable(new FJsonValueString(FDateTime::Now().ToString()));
+    DataArray.Add(Date);
+    m_DataJsonObject->SetArrayField(TEXT("arrayKey"), DataArray);
+
+    m_DataJsonObject->SetObjectField(TEXT("jsonObjKey"), m_DataJsonObject2);
+
+    FString JsonStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonStr);
+    FJsonSerializer::Serialize(m_DataJsonObject.ToSharedRef(), Writer);
+
+    UThinkingAnalytics::Track("TEST_EVENT", JsonStr, AppID);
+}
+
 // 调用 TimeEvent 开启对 TIME_EVENT1 事件的计时
 void UTAUserWidget::Call_TA_EnableTimeEvent(){
     UThinkingAnalytics::TimeEvent("TIME_EVENT1", AppID);
@@ -84,6 +128,24 @@ void UTAUserWidget::Call_TA_UserAppend(){
 // 启用自动采集事件
 void UTAUserWidget::Call_TA_EnableAutoTrack(){
     UThinkingAnalytics::EnableAutoTrack(AppID);
+}
+
+// 启用自动采集事件 + 事件列表
+void UTAUserWidget::Call_TA_EnableAutoTrackWithType(){
+    TArray<FString> EventTypeList;
+    EventTypeList.Emplace(TEXT("ta_app_install"));
+    EventTypeList.Emplace(TEXT("ta_app_start"));
+    EventTypeList.Emplace(TEXT("ta_app_end"));
+    UThinkingAnalytics::EnableAutoTrackWithType(EventTypeList, AppID);
+}
+
+// 启用自动采集事件 + 事件列表 + 事件属性
+void UTAUserWidget::Call_TA_EnableAutoTrackWithTypeAndProperties(){
+    TArray<FString> EventTypeList;
+    EventTypeList.Emplace(TEXT("ta_app_install"));
+    EventTypeList.Emplace(TEXT("ta_app_start"));
+    EventTypeList.Emplace(TEXT("ta_app_end"));
+    UThinkingAnalytics::EnableAutoTrackWithTypeAndProperties(EventTypeList, TEXT("{\"autoTrackKey1\":\"autoTrackvalue1\",\"autoTrackKey2\":\"autoTrackvalue2\"}"), AppID);
 }
 
 // 获取设备id

@@ -29,7 +29,7 @@ public:
 	constexpr static char const* const KEY_PROPERTIES = "properties";
    	const static uint32 USER_INDEX = 67;
 
-   	//EVENTTYPE
+	//EVENT TYPE
    	constexpr static char const* const EVENTTYPE_TRACK = "track";
    	constexpr static char const* const EVENTTYPE_TRACK_UPDATE = "track_update";
    	constexpr static char const* const EVENTTYPE_TRACK_OVERWRITE = "track_overwrite";
@@ -42,4 +42,12 @@ public:
    	constexpr static char const* const EVENTTYPE_USER_DEL = "user_del";
    	constexpr static char const* const KEY_EVENT_ID  = "#event_id";
    	constexpr static char const* const KEY_FIRST_CHECK_ID = "#first_check_id";
+
+	//AUTO TRACK EVENT TYPE
+	constexpr static char const* const AUTOTRACK_EVENTTYPE_INSTALL = "ta_app_install";
+	constexpr static char const* const AUTOTRACK_EVENTTYPE_START = "ta_app_startl";
+	constexpr static char const* const AUTOTRACK_EVENTTYPE_END = "ta_app_end";
+	constexpr static char const* const AUTOTRACK_EVENTTYPE_CLICK = "ta_app_click";
+	constexpr static char const* const AUTOTRACK_EVENTTYPE_CRASH = "ta_app_crash";
+	constexpr static char const* const AUTOTRACK_EVENTTYPE_VIEW_SCREEN = "ta_app_view";
 };

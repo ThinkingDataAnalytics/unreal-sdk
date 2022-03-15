@@ -1,9 +1,12 @@
 <root xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <resourceCopies>
+    <copyFile  src = "$S(PluginDir)/../ThirdParty/Android/ThinkingAnalyticsSDK.aar"  dst = "$S(BuildDir)/gradle/app/libs/ThinkingAnalyticsSDK.aar" /> 
+    </resourceCopies>
     <buildGradleAdditions>
         <insert>
             dependencies {
-                implementation 'cn.thinkingdata.android:ThinkingAnalyticsSDK:2.7.0'
+                implementation files('libs/ThinkingAnalyticsSDK.aar')
             }
         </insert>
     </buildGradleAdditions>
@@ -18,16 +21,19 @@
             import cn.thinkingdata.android.*;
             import java.util.TimeZone;
             import org.json.JSONObject;
+            import org.json.JSONException;
+            import java.util.ArrayList;
             import android.text.TextUtils;
             import cn.thinkingdata.android.utils.TDLog;
             import java.util.Map;
             import java.util.List;
             import java.util.Iterator;
+            import cn.thinkingdata.android.utils.TDConstants;
         </insert>
     </gameActivityImportAdditions>
     <gameActivityClassAdditions>
         <insert>
-
+            <![CDATA[
             static Map sInstances = new HashMap();
             static ArrayList sAppIds = new ArrayList();
             
@@ -236,6 +242,58 @@
                 }
             }
             
+            public void taEnableAutoTrack(String appid, String[] eventTypeList) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    List<ThinkingAnalyticsSDK.AutoTrackEventType> typeList = new ArrayList<>();
+                    for (String eventType : eventTypeList) {
+                        if (eventType.equals(TDConstants.APP_START_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START);
+                        } else if (eventType.equals(TDConstants.APP_INSTALL_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
+                        } else if (eventType.equals(TDConstants.APP_END_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END);
+                        } else if (eventType.equals(TDConstants.APP_CLICK_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CLICK);
+                        } else if (eventType.equals(TDConstants.APP_CRASH_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CRASH);
+                        } else if (eventType.equals(TDConstants.APP_VIEW_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_VIEW_SCREEN);
+                        }
+                    }
+                    mInstance.enableAutoTrack(typeList);
+                }
+            }
+
+            public void taEnableAutoTrack(String appid, String[] eventTypeList, String properties) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    List<ThinkingAnalyticsSDK.AutoTrackEventType> typeList = new ArrayList<>();
+                    for (String eventType : eventTypeList) {
+                        if (eventType.equals(TDConstants.APP_START_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START);
+                        } else if (eventType.equals(TDConstants.APP_INSTALL_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
+                        } else if (eventType.equals(TDConstants.APP_END_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END);
+                        } else if (eventType.equals(TDConstants.APP_CLICK_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CLICK);
+                        } else if (eventType.equals(TDConstants.APP_CRASH_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CRASH);
+                        } else if (eventType.equals(TDConstants.APP_VIEW_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_VIEW_SCREEN);
+                        }
+                    }
+                    JSONObject jsonObject = null;
+                    try {
+                        jsonObject = new JSONObject(properties);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    mInstance.enableAutoTrack(typeList, jsonObject);
+                }
+            }
+
             public void taOptOutTracking(String appid) {
                 ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
                 if (null != mInstance) {
@@ -323,7 +381,7 @@
                 sInstances.put(token,mInstance);
                 return token;
             }
-            
+            ]]>
         </insert>
     </gameActivityClassAdditions>
 </root>

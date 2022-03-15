@@ -8,9 +8,9 @@ public class TAUnrealDemo : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "ThinkingAnalytics"});
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "ThinkingAnalytics", "Json", "JsonUtilities"});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "ThinkingAnalytics"});
+		PrivateDependencyModuleNames.AddRange(new string[] { "ThinkingAnalytics", "Json", "JsonUtilities"});
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

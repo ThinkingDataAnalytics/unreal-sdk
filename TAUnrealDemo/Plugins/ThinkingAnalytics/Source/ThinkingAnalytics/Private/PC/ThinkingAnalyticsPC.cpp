@@ -22,6 +22,10 @@ class HandleAutoDeleteAsyncTask : public FNonAbandonableTask
     {
     }
 
+    ~HandleAutoDeleteAsyncTask()
+    {
+    }
+
     void DoWork()
     {
         // ... do the work here
@@ -120,12 +124,12 @@ void UThinkingAnalyticsPC::ObtainEventInfoAndDoPost(const FString& EventName, co
 		FTALog::Warning(CUR_LOG_POSITION, TEXT("event name[ ") + EventName + TEXT(" ] is not valid !"));
 	}
 
-	if ( m_PresetPropertiesJsonObject.IsValid() )
+    TSharedPtr<FJsonObject> PresetPropertiesJsonObject = MakeShareable(new FJsonObject);
+	TSharedRef<TJsonReader<>> PresetPropertiesReader = TJsonReaderFactory<>::Create(this->m_PresetProperties);
+	FJsonSerializer::Deserialize(PresetPropertiesReader, PresetPropertiesJsonObject);
+	for (auto& Elem : PresetPropertiesJsonObject->Values)
     {
-		for (auto& Elem : m_PresetPropertiesJsonObject->Values)
-    	{
-			m_PropertiesJsonObject->SetField(Elem.Key, Elem.Value);
-		}
+		m_PropertiesJsonObject->SetField(Elem.Key, Elem.Value);
 	}
 
 	TSharedPtr<FJsonObject> SuperPropertiesJsonObject = MakeShareable(new FJsonObject);
@@ -463,24 +467,24 @@ FString UThinkingAnalyticsPC::ta_GetSuperProperties()
 
 FString UThinkingAnalyticsPC::ta_GetPresetProperties()
 {
-	FString SuperProperties;
-	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&SuperProperties);
-	FJsonSerializer::Serialize(m_PresetPropertiesJsonObject.ToSharedRef(), Writer);
-	return SuperProperties;
+
+	return this->m_PresetProperties;
 }
 
 void UThinkingAnalyticsPC::InitPresetProperties()
 {
-	m_PresetPropertiesJsonObject = MakeShareable(new FJsonObject);
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_LIB_VERSION, this->m_LibVersion);
-	m_PresetPropertiesJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_WIDTH, FTAUtils::GetScreenWidth());
-	m_PresetPropertiesJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_HEIGHT, FTAUtils::GetScreenHeight());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_OS, FTAUtils::GetOS());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_OS_VERSION, FTAUtils::GetOSVersion());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_APP_VERSION, FTAUtils::GetProjectVersion());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_DEVICE_ID, ta_GetDeviceID());
-	m_PresetPropertiesJsonObject->SetNumberField(FTAConstants::KEY_ZONE_OFFSET, FTAUtils::GetZoneOffset());
-	m_PresetPropertiesJsonObject->SetStringField(FTAConstants::KEY_SYSTEM_LANGUAGE, FTAUtils::GetSystemLanguage());
+	TSharedPtr<FJsonObject> m_DataJsonObject = MakeShareable(new FJsonObject);
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_LIB_VERSION, this->m_LibVersion);
+	m_DataJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_WIDTH, FTAUtils::GetScreenWidth());
+	m_DataJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_HEIGHT, FTAUtils::GetScreenHeight());
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_OS, FTAUtils::GetOS());
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_OS_VERSION, FTAUtils::GetOSVersion());
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_APP_VERSION, FTAUtils::GetProjectVersion());
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_DEVICE_ID, ta_GetDeviceID());
+	m_DataJsonObject->SetNumberField(FTAConstants::KEY_ZONE_OFFSET, FTAUtils::GetZoneOffset());
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_SYSTEM_LANGUAGE, FTAUtils::GetSystemLanguage());
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&m_PresetProperties);
+	FJsonSerializer::Serialize(m_DataJsonObject.ToSharedRef(), Writer);
 }
 
 void UThinkingAnalyticsPC::EnableTracking(bool EnableTrack)

@@ -3,6 +3,7 @@
 #import <vector>
 #import <string>
 #include "ThinkingAnalyticsSettings.h"
+#include "../Common/TAConstants.h"
 
 
 
@@ -57,6 +58,10 @@ public:
     static void ta_user_delete(FString appid = "");
 
     static void ta_enable_autotrack(FString appid = "");
+
+    static void ta_enable_autotrack_with_type(FString appid, TArray<FString> EventTypeList);
+
+    static void ta_enable_autotrack_with_type_and_prop(FString appid, TArray<FString> EventTypeList, FString properties);
 
     static void ta_opt_out_tracking(FString appid = "");
 

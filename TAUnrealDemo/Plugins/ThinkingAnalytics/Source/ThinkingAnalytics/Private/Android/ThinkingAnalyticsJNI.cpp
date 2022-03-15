@@ -27,6 +27,7 @@ namespace thinkinganalytics {
             FString ResultName = FString(nativeName);
             env->ReleaseStringUTFChars(mystring,nativeName);
             env->DeleteLocalRef(mystring);
+            env->DeleteLocalRef(appID);
             return ResultName;
         }
     
@@ -112,6 +113,10 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, track, eventName1, properties1,  dyldproperties1, appID);
+            env->DeleteLocalRef(eventName1);
+            env->DeleteLocalRef(properties1);
+            env->DeleteLocalRef(dyldproperties1);
+            env->DeleteLocalRef(appID);
         }
 
         void jni_ta_track_first(FString eventName, FString properties, FString dyldproperties, FString appid)
@@ -127,6 +132,11 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
 
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, track, eventName1, properties1, firstCheckId1, dyldproperties1, appID);
+            env->DeleteLocalRef(eventName1);
+            env->DeleteLocalRef(properties1);
+            env->DeleteLocalRef(dyldproperties1);
+            env->DeleteLocalRef(firstCheckId1);
+            env->DeleteLocalRef(appID);
         }
 
         void jni_ta_track_first_withId(FString eventName, FString properties, FString firstCheckId,  FString dyldproperties, FString appid)
@@ -142,6 +152,11 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
 
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, track, eventName1, properties1, firstCheckId1, dyldproperties1, appID);
+            env->DeleteLocalRef(eventName1);
+            env->DeleteLocalRef(properties1);
+            env->DeleteLocalRef(dyldproperties1);
+            env->DeleteLocalRef(firstCheckId1);
+            env->DeleteLocalRef(appID);
         }
 
         void jni_ta_track_update(FString eventName, FString properties, FString eventId,  FString dyldproperties, FString appid)
@@ -157,6 +172,11 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
 
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, track, eventName1, properties1, eventId1, dyldproperties1, appID);
+            env->DeleteLocalRef(eventName1);
+            env->DeleteLocalRef(properties1);
+            env->DeleteLocalRef(dyldproperties1);
+            env->DeleteLocalRef(eventId1);
+            env->DeleteLocalRef(appID);
         }
 
         void jni_ta_track_overwrite(FString eventName, FString properties, FString eventId, FString dyldproperties, FString appid)
@@ -172,6 +192,11 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
 
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, track, eventName1, properties1, eventId1, dyldproperties1, appID);
+            env->DeleteLocalRef(eventName1);
+            env->DeleteLocalRef(properties1);
+            env->DeleteLocalRef(dyldproperties1);
+            env->DeleteLocalRef(eventId1);
+            env->DeleteLocalRef(appID);
         }
 
         void jni_ta_time_event(FString eventName, FString appid)
@@ -183,6 +208,8 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, timeEvent, eventNameString, appID);
+            env->DeleteLocalRef(eventNameString);
+            env->DeleteLocalRef(appID);
         }
 
         void jni_ta_identify(FString distinctId, FString appid)
@@ -195,6 +222,8 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, identify, distinctIdString, appID);
+            env->DeleteLocalRef(distinctIdString);
+            env->DeleteLocalRef(appID);
         }
     
         void jni_ta_login(FString accountId, FString appid)
@@ -229,6 +258,7 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, flush, appID);
+            env->DeleteLocalRef(appID);
         }
     
         void jni_ta_user_set(FString properties, FString appid)
@@ -250,6 +280,8 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, userOperations, 0, propertiesString, appID);
+            env->DeleteLocalRef(propertiesString);
+            env->DeleteLocalRef(appID);
         }
         void jni_ta_user_set_once(FString properties, FString appid)
         {
@@ -261,6 +293,8 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, userOperations, 1, propertiesString, appID);
+            env->DeleteLocalRef(propertiesString);
+            env->DeleteLocalRef(appID);
         }
     
         void jni_ta_user_append(FString properties, FString appid)
@@ -273,6 +307,8 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, userOperations, 2, propertiesString, appID);
+            env->DeleteLocalRef(propertiesString);
+            env->DeleteLocalRef(appID);
         }
     
         void jni_ta_user_unset(FString property, FString appid) {
@@ -284,6 +320,8 @@ namespace thinkinganalytics {
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, userOperations, 3, propertiesString, appID);
+            env->DeleteLocalRef(propertiesString);
+            env->DeleteLocalRef(appID);
         }
     
         void jni_ta_user_add(FString properties, FString appid) {
@@ -294,6 +332,8 @@ namespace thinkinganalytics {
                 FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taUserOperations", "(ILjava/lang/String;Ljava/lang/String;)V", false);
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, userOperations, 4, propertiesString, appID);
+            env->DeleteLocalRef(propertiesString);
+            env->DeleteLocalRef(appID);
         }
 
         void jni_ta_user_delete(FString appid)
@@ -314,6 +354,39 @@ namespace thinkinganalytics {
                 FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taEnableAutoTrack", "(Ljava/lang/String;)V", false);
             jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, autoTrack, appID);
+        }
+
+        void jni_ta_enable_autotrack_with_type(FString appid, TArray<FString> eventTypeList)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+
+            jmethodID autoTrack =
+                FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taEnableAutoTrack", "(Ljava/lang/String;[Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+            auto stringArray = NewScopedJavaObject(env, (jobjectArray)env->NewObjectArray(eventTypeList.Num(), FJavaWrapper::JavaStringClass, NULL));
+            for (uint32 param = 0; param < eventTypeList.Num(); param++)
+            {
+            auto stringValue = FJavaHelper::ToJavaString(env, eventTypeList[param]);
+            env->SetObjectArrayElement(*stringArray, param, *stringValue);
+            }
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, autoTrack, appID, *stringArray);
+        }
+
+        void jni_ta_enable_autotrack_with_type_and_prop(FString appid, TArray<FString> eventTypeList, FString properties)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+
+            jmethodID autoTrack =
+                FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taEnableAutoTrack", "(Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+            auto stringArray = NewScopedJavaObject(env, (jobjectArray)env->NewObjectArray(eventTypeList.Num(), FJavaWrapper::JavaStringClass, NULL));
+            for (uint32 param = 0; param < eventTypeList.Num(); param++)
+            {
+            auto stringValue = FJavaHelper::ToJavaString(env, eventTypeList[param]);
+            env->SetObjectArrayElement(*stringArray, param, *stringValue);
+            }
+            jstring propertiesString = env->NewStringUTF(TCHAR_TO_UTF8(*properties));
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, autoTrack, appID, *stringArray, propertiesString);
         }
         
         void jni_ta_opt_out_tracking(FString appid)

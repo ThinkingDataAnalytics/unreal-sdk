@@ -39,6 +39,12 @@ public:
     static void EnableAutoTrack(const FString& AppId = "");
 
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void EnableAutoTrackWithType(const TArray<FString>& EventTypeList, const FString& AppId = "");
+
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void EnableAutoTrackWithTypeAndProperties(const TArray<FString>& EventTypeList, const FString& Properties, const FString& AppId = "");
+
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void CalibrateTimeWithNtp(const FString& urlString);
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")

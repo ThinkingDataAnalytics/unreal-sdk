@@ -1,8 +1,8 @@
 // Copyright 2021 ThinkingData. All Rights Reserved.
 #pragma once
 
-#include "TALog.h"
-#include "TAUtils.h"
+#include "../Common/TALog.h"
+#include "../Common/TAUtils.h"
 
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
@@ -18,5 +18,5 @@ public:
 
 private:
 	
-		void RequestComplete(FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool IsSuccess);
+	void RequestComplete(FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool IsSuccess);
 };

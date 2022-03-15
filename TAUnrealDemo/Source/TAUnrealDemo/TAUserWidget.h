@@ -68,6 +68,12 @@ class TAUNREALDEMO_API UTAUserWidget : public UUserWidget
     void Call_TA_EnableAutoTrack();
     
     UFUNCTION(BlueprintCallable)
+    void Call_TA_EnableAutoTrackWithType();
+
+    UFUNCTION(BlueprintCallable)
+    void Call_TA_EnableAutoTrackWithTypeAndProperties();
+
+    UFUNCTION(BlueprintCallable)
     void Call_TA_Get_DeviceID();
     
     UFUNCTION(BlueprintCallable)
@@ -108,6 +114,12 @@ class TAUNREALDEMO_API UTAUserWidget : public UUserWidget
 
     UFUNCTION(BlueprintCallable)
     void Call_TA_TrackFirstWithId();
+
+    UFUNCTION(BlueprintCallable)
+    void Call_TA_TrackEvent_10000();
+
+    UFUNCTION(BlueprintCallable)
+    void Call_TA_TrackEvent_Complex();
 
     UFUNCTION(BlueprintCallable)
     void Call_TA_Updateable();

@@ -1,8 +1,8 @@
 // Copyright 2021 ThinkingData. All Rights Reserved.
 #pragma once
 
-#include "TALog.h"
-#include "TAConstants.h"
+#include "../Common/TALog.h"
+#include "../Common/TAConstants.h"
 
 #include "GameFramework/SaveGame.h"
 #include "TASaveGame.generated.h"

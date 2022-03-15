@@ -64,6 +64,10 @@ namespace thinkinganalytics
 
         void jni_ta_enable_autotrack(FString appid);
 
+        void jni_ta_enable_autotrack_with_type(FString appid, TArray<FString> EventTypeList);
+
+        void jni_ta_enable_autotrack_with_type_and_prop(FString appid, TArray<FString> EventTypeList, FString Properties);
+
         void jni_ta_opt_out_tracking(FString appid);
 
         void jni_ta_opt_in_tracking(FString appid);

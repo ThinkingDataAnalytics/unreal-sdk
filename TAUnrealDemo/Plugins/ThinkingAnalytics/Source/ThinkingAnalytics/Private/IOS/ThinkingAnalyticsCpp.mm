@@ -271,6 +271,84 @@ void ThinkingAnalyticsCpp::ta_enable_autotrack(FString appid)
     }
 }
 
+void ThinkingAnalyticsCpp::ta_enable_autotrack_with_type(FString appid, TArray<FString> EventTypeList)
+{
+
+    ThinkingAnalyticsSDK *instance = getCurrentInstance(appid);
+    if( instance )
+    {
+        uint32 typeList = 0;
+        for (uint32 i = 0; i < EventTypeList.Num(); i++)
+        {
+            if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_START))
+            {
+                typeList = typeList | (1 << 0);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_END))
+            {
+                typeList = typeList | (1 << 1);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_CLICK))
+            {
+                typeList = typeList | (1 << 2);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_VIEW_SCREEN))
+            {
+                typeList = typeList | (1 << 3);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_CRASH))
+            {
+                typeList = typeList | (1 << 4);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_INSTALL))
+            {
+                typeList = typeList | (1 << 5);
+            }
+        }
+        [instance enableAutoTrack: typeList];
+    }
+}
+
+void ThinkingAnalyticsCpp::ta_enable_autotrack_with_type_and_prop(FString appid, TArray<FString> EventTypeList, FString properties)
+{
+
+    ThinkingAnalyticsSDK *instance = getCurrentInstance(appid);
+    if( instance )
+    {
+        uint32 typeList = 0;
+        for (uint32 i = 0; i < EventTypeList.Num(); i++)
+        {
+            if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_START))
+            {
+                typeList = typeList | (1 << 0);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_END))
+            {
+                typeList = typeList | (1 << 1);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_CLICK))
+            {
+                typeList = typeList | (1 << 2);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_VIEW_SCREEN))
+            {
+                typeList = typeList | (1 << 3);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_CRASH))
+            {
+                typeList = typeList | (1 << 4);
+            }
+            else if (EventTypeList[i].Equals(FTAConstants::AUTOTRACK_EVENTTYPE_INSTALL))
+            {
+                typeList = typeList | (1 << 5);
+            }
+        }
+        NSDictionary *properties_dict = nil;
+        convertToDictionary(TCHAR_TO_UTF8(*properties), &properties_dict);
+        [instance enableAutoTrack: typeList properties:properties_dict];
+    }
+}
+
 void ThinkingAnalyticsCpp::ta_identify(FString distinctId, FString appid) 
 {
 

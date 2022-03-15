@@ -34,8 +34,8 @@ void FRequestHelper::RequestComplete(FHttpRequestPtr RequestPtr, FHttpResponsePt
     FTALog::Warning(CUR_LOG_POSITION, TEXT("is responseCode = ") + (FString::FromInt(ResponsePtr->GetResponseCode())));
     FTALog::Warning(CUR_LOG_POSITION, TEXT("is content = ") + (ResponsePtr->GetContentAsString()));
     if ( !EHttpResponseCodes::IsOk(ResponsePtr->GetResponseCode()) ) return;
-   // 获得返回的json数据
-   // TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(ResponsePtr->GetContentAsString());
-   // 把FString转成TCHAR
-   // TCHAR* serializedChar = ResponsePtr->GetContentAsString().GetCharArray().GetData();
+    // 获得返回的json数据
+    // TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(ResponsePtr->GetContentAsString());
+    // 把FString转成TCHAR
+    // TCHAR* serializedChar = ResponsePtr->GetContentAsString().GetCharArray().GetData();
 }

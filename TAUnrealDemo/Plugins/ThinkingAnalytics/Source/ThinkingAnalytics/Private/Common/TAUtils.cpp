@@ -10,8 +10,8 @@ FString FTAUtils::EncodeData(const FString& UnprocessedStr)
 {
 	// Compatible with Chinese
 	FTCHARToUTF8 ToUtf8Converter(UnprocessedStr.GetCharArray().GetData());
-   auto UnprocessedDataLen = ToUtf8Converter.Length();
-   auto UnprocessedData = ToUtf8Converter.Get();
+	auto UnprocessedDataLen = ToUtf8Converter.Length();
+	auto UnprocessedData = ToUtf8Converter.Get();
 	int32 CompressBufferLen = FCompression::CompressMemoryBound(NAME_Gzip, UnprocessedDataLen);
 	void* CompressBuffer = FMemory::Malloc(CompressBufferLen);
 	bool Result = FCompression::CompressMemory(NAME_Gzip, CompressBuffer, CompressBufferLen, UnprocessedData, 
@@ -19,11 +19,11 @@ FString FTAUtils::EncodeData(const FString& UnprocessedStr)
 
 	FString CompressedStr; 
 	if ( Result )
-   {
+	{
 		CompressedStr = FBase64::Encode((uint8*)CompressBuffer, CompressBufferLen);
 	}
-   else
-   {
+	else
+	{
 		FTALog::Warning(CUR_LOG_POSITION, TEXT("EncodeData Error !"));
 	}
 	FMemory::Free(CompressBuffer);
@@ -33,11 +33,11 @@ FString FTAUtils::EncodeData(const FString& UnprocessedStr)
 FString FTAUtils::GetCurrentTimeStamp()
 {
 	FDateTime TDateTime = FDateTime::Now();
-   int64 SecondTimestamp = TDateTime.ToUnixTimestamp();
-   int32 MillisecondPart = TDateTime.GetMillisecond();
-   FString TimeStr = *FString::Printf(TEXT("%llu"), SecondTimestamp);
-   TimeStr += *FString::Printf(TEXT("%lld"), MillisecondPart);
-   return TimeStr;
+	int64 SecondTimestamp = TDateTime.ToUnixTimestamp();
+	int32 MillisecondPart = TDateTime.GetMillisecond();
+	FString TimeStr = *FString::Printf(TEXT("%llu"), SecondTimestamp);
+	TimeStr += *FString::Printf(TEXT("%lld"), MillisecondPart);
+	return TimeStr;
 }
 
 FString FTAUtils::FormatTime(FDateTime DateTime)
@@ -56,7 +56,7 @@ FString FTAUtils::GetGuid()
 bool FTAUtils::IsInvalidName(const FString& EventName)
 {
 	if ( &EventName == nullptr )
-   {
+	{
 		return true;
 	}
 	FRegexPattern MatherPatter(Pattern);
