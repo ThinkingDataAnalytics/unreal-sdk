@@ -1,3 +1,15 @@
+#### v1.5.0 2022/06/15
+* 更新 iOS(2.8.0.1) ,Android SDK(2.8.0.1) 版本
+* Android & IOS 支持数据加密
+* PC新增#install_time/#fps/#ram/#disk 预置属性
+* Android & IOS 支持三方数据同步
+* Android & IOS支持自动采集事件回调
+* Android & IOS支持采集Crash事件
+* Android & IOS支持setTrackStatus接口
+* 全平台支持UserUniqueAppend接口
+* 设置动态公共属性接口优化
+* 已知bug修复
+
 #### v1.4.1 2022/03/15
 * 更新 iOS(2.7.3) ,Android SDK(2.7.3) 版本
 * Android & IOS 支持复杂数据类型

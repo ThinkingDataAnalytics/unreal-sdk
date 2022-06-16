@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.5.0",
+	"FriendlyName": "ThinkingAnalytics",
+	"Description": "Analytics Provider by Thinking Data",
+	"Category": "Analytics",
+	"CreatedBy": "Thinking Data Ltd.",
+	"CreatedByURL": "https://www.thinkingdata.cn",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EnabledByDefault" : true,
+
+	"Modules":
+	[
+		{
+			"Name": "ThinkingAnalytics",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		}
+	]
+}
