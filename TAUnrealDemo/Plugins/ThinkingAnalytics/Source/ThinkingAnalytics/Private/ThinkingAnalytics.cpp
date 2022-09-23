@@ -19,8 +19,6 @@
 #include "./PC/ThinkingAnalyticsPC.h"
 #endif
 
-std::map<FString,GetDynamicSuperProperties> UThinkingAnalytics::dynamicPropertiesMap = {};
-
 DEFINE_LOG_CATEGORY_STATIC(ThinkingAnalytics, Display, All);
 
 UThinkingAnalytics::UThinkingAnalytics(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -73,6 +71,28 @@ void UThinkingAnalytics::InitializeInstance(const FString& appid, const FString&
 #endif
 }
 
+void UThinkingAnalytics::InitializeEncryptInstance(const FString& appid, const FString& serverurl, TAMode mode, bool bEnableLog, const FString& timeZone, bool bEnableEncrypt, const FString& EncryptPublicKey, int EncryptVersion, const FString& SymmetricEncryption, const FString& AsymmetricEncryption)
+{
+    auto  &manager = IPluginManager::Get();
+    auto  plugin = manager.FindPlugin("ThinkingAnalytics");
+
+    if ( !plugin.IsValid() )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("ThinkingAnalytics is not correctly loaded"));
+        return;
+    }
+    
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_initializeEncryptInstance(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName, bEnableEncrypt, EncryptPublicKey, EncryptVersion, SymmetricEncryption, AsymmetricEncryption);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_initializeEncryptInstance(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName, EncryptPublicKey, EncryptVersion, SymmetricEncryption, AsymmetricEncryption);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC::Initialize(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName);
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Calling Initialize... The platform is not supported. %d"), mode);
+#endif
+}
+
 void UThinkingAnalytics::EnableAutoTrack(const FString& AppId)
 {
 #if PLATFORM_ANDROID
@@ -106,6 +126,21 @@ void UThinkingAnalytics::EnableAutoTrackWithTypeAndProperties(const TArray<FStri
 #endif
 }
 
+void UThinkingAnalytics::EnableAutoTrackWithTypeAndProperties(const TArray<FString>& EventTypeList, TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_enable_autotrack_with_type_and_prop(AppId, EventTypeList, PropertiesStr);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_enable_autotrack_with_type_and_prop(AppId, EventTypeList, PropertiesStr);
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Calling UThinkingAnalytics::EnableAutoTrack... The platform is not supported."));
+#endif
+}
+
 void UThinkingAnalytics::Track(const FString& EventName, const FString& Properties, const FString& AppId)
 {
 #if PLATFORM_ANDROID
@@ -126,6 +161,36 @@ void UThinkingAnalytics::Track(const FString& EventName, const FString& Properti
     {
         FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
         Instance->Track(EventName, Properties, Dyldproperties); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::Track"));
+#endif
+}
+
+void UThinkingAnalytics::Track(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    FString appid = thinkinganalytics::jni_ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    thinkinganalytics::jni_ta_track(EventName, PropertiesStr, dyldproperties, AppId);
+#elif PLATFORM_IOS
+    FString appid = ThinkingAnalyticsCpp::ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    ThinkingAnalyticsCpp::ta_track(EventName, PropertiesStr, dyldproperties, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
+        Instance->Track(EventName, PropertiesStr, Dyldproperties); 
     }
 #else
     UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::Track"));
@@ -158,6 +223,36 @@ void UThinkingAnalytics::TrackFirst(const FString& EventName, const FString& Pro
 #endif
 }
 
+void UThinkingAnalytics::TrackFirst(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    FString appid = thinkinganalytics::jni_ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    thinkinganalytics::jni_ta_track_first(EventName, PropertiesStr, dyldproperties, AppId);
+#elif PLATFORM_IOS
+    FString appid = ThinkingAnalyticsCpp::ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    ThinkingAnalyticsCpp::ta_track_first(EventName, PropertiesStr, dyldproperties, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
+        Instance->TrackFirst(EventName, PropertiesStr, Dyldproperties); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::TrackUnique"));
+#endif
+}
+
 void UThinkingAnalytics::TrackFirstWithId(const FString& EventName, const FString& Properties, const FString& FirstCheckId, const FString& AppId)
 {
 #if PLATFORM_ANDROID
@@ -178,6 +273,36 @@ void UThinkingAnalytics::TrackFirstWithId(const FString& EventName, const FStrin
     {
         FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
         Instance->TrackFirstWithId(EventName, Properties, FirstCheckId, Dyldproperties); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::TrackUniqueWithId"));
+#endif
+}
+
+void UThinkingAnalytics::TrackFirstWithId(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& FirstCheckId, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    FString appid = thinkinganalytics::jni_ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    thinkinganalytics::jni_ta_track_first_withId(EventName, PropertiesStr, FirstCheckId, dyldproperties, AppId);
+#elif PLATFORM_IOS
+    FString appid = ThinkingAnalyticsCpp::ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    ThinkingAnalyticsCpp::ta_track_first_withId(EventName, PropertiesStr, FirstCheckId, dyldproperties, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
+        Instance->TrackFirstWithId(EventName, PropertiesStr, FirstCheckId, Dyldproperties); 
     }
 #else
     UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::TrackUniqueWithId"));
@@ -210,6 +335,36 @@ void UThinkingAnalytics::TrackUpdate(const FString& EventName, const FString& Pr
 #endif
 }
 
+void UThinkingAnalytics::TrackUpdate(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& EventId, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    FString appid = thinkinganalytics::jni_ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    thinkinganalytics::jni_ta_track_update(EventName, PropertiesStr, EventId, dyldproperties, AppId);
+#elif PLATFORM_IOS
+    FString appid = ThinkingAnalyticsCpp::ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    ThinkingAnalyticsCpp::ta_track_update(EventName, PropertiesStr, EventId, dyldproperties, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
+        Instance->TrackUpdate(EventName, PropertiesStr, EventId, Dyldproperties); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::TrackUpdate"));
+#endif
+}
+
 void UThinkingAnalytics::TrackOverwrite(const FString& EventName, const FString& Properties, const FString& EventId, const FString& AppId)
 {
 #if PLATFORM_ANDROID
@@ -230,6 +385,36 @@ void UThinkingAnalytics::TrackOverwrite(const FString& EventName, const FString&
     {
         FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
         Instance->TrackOverwrite(EventName, Properties, EventId, Dyldproperties); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::TrackOverwrite"));
+#endif
+}
+
+void UThinkingAnalytics::TrackOverwrite(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& EventId, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    FString appid = thinkinganalytics::jni_ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    thinkinganalytics::jni_ta_track_overwrite(EventName, PropertiesStr, EventId, dyldproperties, AppId);
+#elif PLATFORM_IOS
+    FString appid = ThinkingAnalyticsCpp::ta_getCurrentAppId(AppId);
+    FString dyldproperties = UThinkingAnalytics::GetDynamicProperties(appid);
+    ThinkingAnalyticsCpp::ta_track_overwrite(EventName, PropertiesStr, EventId, dyldproperties, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        FString Dyldproperties = UThinkingAnalytics::GetDynamicProperties(Instance->InstanceAppID);
+        Instance->TrackOverwrite(EventName, PropertiesStr, EventId, Dyldproperties); 
     }
 #else
     UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::TrackOverwrite"));
@@ -268,6 +453,31 @@ void UThinkingAnalytics::UserSet(const FString& Properties, const FString& AppId
 #endif
 }
 
+void UThinkingAnalytics::UserSet(TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_user_set(PropertiesStr, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_user_set(PropertiesStr, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->UserSet(PropertiesStr); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::UserSet"));
+#endif
+}
+
 void UThinkingAnalytics::UserSetOnce(const FString& Properties, const FString& AppId)
 {
 #if PLATFORM_ANDROID
@@ -283,6 +493,31 @@ void UThinkingAnalytics::UserSetOnce(const FString& Properties, const FString& A
     else
     {
         Instance->UserSetOnce(Properties); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::UserSetOnce"));
+#endif
+}
+
+void UThinkingAnalytics::UserSetOnce(TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_user_set_once(PropertiesStr, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_user_set_once(PropertiesStr, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->UserSetOnce(PropertiesStr); 
     }
 #else
     UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::UserSetOnce"));
@@ -357,6 +592,77 @@ void UThinkingAnalytics::UserAppend(const FString& Properties, const FString& Ap
     }
 #else
     UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::UserAppend"));
+#endif
+}
+
+void UThinkingAnalytics::UserAppend(TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_user_append(PropertiesStr, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_user_append(PropertiesStr, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->UserAppend(PropertiesStr); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::UserAppend"));
+#endif
+}
+
+void UThinkingAnalytics::UserUniqueAppend(const FString& Properties, const FString& AppId)
+{
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_user_unique_append(Properties, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_user_unique_append(Properties, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->UserUniqueAppend(Properties); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::UserUniqueAppend"));
+#endif
+}
+
+void UThinkingAnalytics::UserUniqueAppend(TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_user_unique_append(PropertiesStr, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_user_unique_append(PropertiesStr, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->UserUniqueAppend(PropertiesStr); 
+    }
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::UserUniqueAppend"));
 #endif
 }
 
@@ -450,6 +756,16 @@ void UThinkingAnalytics::Flush(const FString& AppId)
     thinkinganalytics::jni_ta_flush(AppId);
 #elif PLATFORM_IOS
     ThinkingAnalyticsCpp::ta_flush(AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->ta_Flush();
+    }
 #else
     UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::Flush"));
 #endif
@@ -582,9 +898,57 @@ void UThinkingAnalytics::SetSuperProperties(const FString& properties, const FSt
     else
     {
         Instance->ta_SetSuperProperties(properties); 
-    }    
+    }
 #else
 UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::SetSuperProperties"));
+
+ #endif
+}
+
+void UThinkingAnalytics::SetSuperProperties(TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+    
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_set_superProperties(PropertiesStr, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_set_superProperties(PropertiesStr, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->ta_SetSuperProperties(PropertiesStr); 
+    }
+#else
+UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::SetSuperProperties"));
+
+ #endif
+}
+
+void UThinkingAnalytics::SetTrackStatus(const FString& Status, const FString& AppId)
+{
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_set_trackStatus(Status, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_set_trackStatus(Status, AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UThinkingAnalyticsPC* Instance = UThinkingAnalyticsPC::GetInstance(AppId);
+    if ( Instance == nullptr )
+    {
+        UE_LOG(ThinkingAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->ta_SetTrackState(Status);
+    }
+#else
+UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::SetTrackStatus"));
 
  #endif
 }
@@ -642,19 +1006,125 @@ FString UThinkingAnalytics::CreateLightInstance(const FString& AppId)
 #elif PLATFORM_IOS
     return ThinkingAnalyticsCpp::ta_createLightInstance(AppId);
 #else
-UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::CreateLightInstance"));
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::CreateLightInstance"));
     return FString("");
- #endif
+#endif
 }
 
+void UThinkingAnalytics::EnableThirdPartySharing(const TArray<FString>& EventTypeList, const FString& AppId)
+{
+    int typeList = 0;
+    for (int i = 0; i < EventTypeList.Num(); i++)
+    {
+        if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeAPPSFLYER))
+        {
+            typeList = typeList | (1 << 0);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeIRONSOURCE))
+        {
+            typeList = typeList | (1 << 1);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeADJUST))
+        {
+            typeList = typeList | (1 << 2);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeBRANCH))
+        {
+            typeList = typeList | (1 << 3);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeTOPON))
+        {
+            typeList = typeList | (1 << 4);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeTRACKING))
+        {
+            typeList = typeList | (1 << 5);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeTRADPLUS))
+        {
+            typeList = typeList | (1 << 6);
+        }
+    }
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_enableThirdPartySharing(typeList, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_enableThirdPartySharing(typeList, AppId);
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::EnableThirdPartySharing"));
+#endif 
+}
+
+void UThinkingAnalytics::EnableThirdPartySharingWithCustomProperties(const TArray<FString>& EventTypeList, TSharedPtr<FJsonObject> Properties, const FString& AppId)
+{
+int typeList = 0;
+    for (int i = 0; i < EventTypeList.Num(); i++)
+    {
+        if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeAPPSFLYER))
+        {
+            typeList = typeList | (1 << 0);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeIRONSOURCE))
+        {
+            typeList = typeList | (1 << 1);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeADJUST))
+        {
+            typeList = typeList | (1 << 2);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeBRANCH))
+        {
+            typeList = typeList | (1 << 3);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeTOPON))
+        {
+            typeList = typeList | (1 << 4);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeTRACKING))
+        {
+            typeList = typeList | (1 << 5);
+        }
+        else if (EventTypeList[i].Equals(FTAConstants::ThirdPartyShareTypeTRADPLUS))
+        {
+            typeList = typeList | (1 << 6);
+        }
+    }
+
+    FString PropertiesStr;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&PropertiesStr);
+    FJsonSerializer::Serialize(Properties.ToSharedRef(), Writer);
+
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_enableThirdPartySharingWithCustomProperties(typeList, PropertiesStr, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_enableThirdPartySharingWithCustomProperties(typeList, PropertiesStr, AppId);
+#else
+    UE_LOG(ThinkingAnalytics, Warning, TEXT("Unsupported Platform. Calling UThinkingAnalytics::EnableThirdPartySharing"));
+#endif
+}
 
 FString UThinkingAnalytics::GetDynamicProperties(const FString& AppId)
 {
     FString jsonString = "";
-    if(UThinkingAnalytics::dynamicPropertiesMap.size() > 0 && UThinkingAnalytics::dynamicPropertiesMap.count(AppId) > 0)
+    TADynamicSuperPropRetValDelegate* delegate = TADynamicSuperPropMethods.Find(*AppId);
+    if(delegate != nullptr)
     {
-        GetDynamicSuperProperties getDynamicSuperProperties = UThinkingAnalytics::dynamicPropertiesMap[AppId];
-        jsonString = getDynamicSuperProperties();
+        jsonString = delegate->Execute();
     }
     return jsonString;
+}
+
+void UThinkingAnalytics::SetDynamicProperties(TADynamicSuperPropRetValDelegate Del, const FString& AppId)
+{
+    TADynamicSuperPropMethods.Emplace(*AppId, Del);
+}
+
+void UThinkingAnalytics::TASetAutoTrackEventListener(TAAutoTrackEventRetValDelegate Del, const TArray<FString>& EventTypeList, const FString& AppId)
+{
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_setAutoTrackEventListener(Del, EventTypeList, AppId);
+#elif PLATFORM_IOS
+    ThinkingAnalyticsCpp::ta_setAutoTrackEventListener(Del, EventTypeList, AppId);
+#else
+    UE_LOG(LogTemp, Warning, TEXT("Calling UThinkingAnalytics::EnableAutoTrack... The platform is not supported."));
+#endif   
 }

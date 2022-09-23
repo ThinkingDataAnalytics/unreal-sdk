@@ -1,50 +1,6 @@
 // Copyright 2021 ThinkingData. All Rights Reserved.
 #include "ThinkingAnalyticsPC.h"
 
-class HandleAutoDeleteAsyncTask : public FNonAbandonableTask
-{
-    friend class FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>;
-
-    FString EventName;
-   	FString Properties;
-    FString DynamicProperties;
-    FString EventType;
-	FString AddProperties;
-	UThinkingAnalyticsPC* m_Instance;
-
-    HandleAutoDeleteAsyncTask(const FString& InEventName, const FString& InProperties, const FString& InDynamicProperties, const FString& InEventType, const FString& InAddProperties, UThinkingAnalyticsPC *Instance)
-    	: EventName(InEventName), Properties(InProperties), DynamicProperties(InDynamicProperties), EventType(InEventType), AddProperties(InAddProperties), m_Instance(Instance)
-    {
-    }
-
-   	HandleAutoDeleteAsyncTask(const FString& InEventType, const FString& InProperties, UThinkingAnalyticsPC *Instance)
-        : Properties(InProperties), EventType(InEventType), m_Instance(Instance)
-    {
-    }
-
-    ~HandleAutoDeleteAsyncTask()
-    {
-    }
-
-    void DoWork()
-    {
-        // ... do the work here
-        if ( EventName == "" )
-    	{
-            m_Instance->UserOperations(EventType, Properties);
-        }
-	    else
-	    {
-            m_Instance->ObtainEventInfoAndDoPost(EventName, Properties, DynamicProperties, EventType, AddProperties);
-        }
-    }
-
-    FORCEINLINE TStatId GetStatId() const{
-        RETURN_QUICK_DECLARE_CYCLE_STAT(HandleAutoDeleteAsyncTask, STATGROUP_ThreadPoolAsyncTasks);
-    }
-};
-
-
 UThinkingAnalyticsPC::UThinkingAnalyticsPC(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 }
@@ -61,32 +17,28 @@ void UThinkingAnalyticsPC::Initialize(const UThinkingAnalyticsSettings *DefaultS
 void UThinkingAnalyticsPC::Initialize(const FString& AppID, const FString& ServerUrl, TAMode Mode, bool EnableLog, const FString& TimeZone, FString Version)
 {
 	SetEnableLog(EnableLog);
-
-	if ( &ThinkingAnalyticsSingletons == nullptr )
-    {	
-		ThinkingAnalyticsSingletons = TMap<FString, UThinkingAnalyticsPC*>();
-	}
-	if ( AppID == "" )
+	if ( AppID.IsEmpty() )
     {
 		return;
 	}
-	if ( ThinkingAnalyticsSingletons.Find(*AppID) == nullptr )
+	if ( ThinkingAnalyticsSingletons.Find(AppID) == nullptr )
     {
 		UThinkingAnalyticsPC* Instance = NewObject<UThinkingAnalyticsPC>();
-		Instance->Init(AppID, ServerUrl, Mode, Version);
+		Instance->Init(AppID, ServerUrl, Mode, TimeZone, Version);
 		Instance->AddToRoot();
-		ThinkingAnalyticsSingletons.Add(*AppID, Instance);
+		ThinkingAnalyticsSingletons.Emplace(AppID, Instance);
 
-		Instance->m_SaveGame = Instance->ReadValue();
-		Instance->m_DistinctID = Instance->m_SaveGame->m_DistinctID;
-		Instance->m_AccountID = Instance->m_SaveGame->m_AccountID;
-		Instance->m_SuperProperties = Instance->m_SaveGame->m_SuperProperties;
-		Instance->m_SaveGame->AddToRoot();
+		Instance->m_SaveConfig = Instance->ReadValue();
+		Instance->m_DistinctID = Instance->m_SaveConfig->m_DistinctID;
+		Instance->m_AccountID = Instance->m_SaveConfig->m_AccountID;
+		Instance->m_TrackState = Instance->m_SaveConfig->m_TrackState;
+		Instance->m_SuperProperties = Instance->m_SaveConfig->m_SuperProperties;
+		Instance->m_SaveConfig->AddToRoot();
 		Instance->InitPresetProperties();
-		Instance->m_EnableTrack = true;
-
+		Instance->m_EventManager = NewObject<UTAEventManager>();
+		Instance->m_EventManager->BindInstance(Instance);
+		Instance->m_EventManager->AddToRoot();
 		FTALog::Warning(CUR_LOG_POSITION, TEXT("UThinkingAnalyticsPC Initialize Success !"));
-
 	}
     else
     {
@@ -94,12 +46,13 @@ void UThinkingAnalyticsPC::Initialize(const FString& AppID, const FString& Serve
 	}
 }
 
-void UThinkingAnalyticsPC::Init(const FString& AppID, const FString& ServerUrl, TAMode Mode, FString Version)
+void UThinkingAnalyticsPC::Init(const FString& AppID, const FString& ServerUrl, TAMode Mode, const FString& TimeZone, FString Version)
 {
+	m_TimeZone_Offset = FTAUtils::GetZoneOffsetWithTimeZone(TimeZone);
 	this->InstanceAppID = AppID;
-	if ( DefaultAppID == "" )
+	if ( DefaultAppID.IsEmpty() )
     {
-		DefaultAppID = *AppID;
+		DefaultAppID = AppID;
 		FTALog::Warning(CUR_LOG_POSITION, TEXT("DefaultAppID : ") + DefaultAppID);
 	}
 
@@ -110,90 +63,20 @@ void UThinkingAnalyticsPC::Init(const FString& AppID, const FString& ServerUrl, 
 
 void UThinkingAnalyticsPC::Track(const FString& EventName, const FString& Properties, const FString& DynamicProperties)
 {
-	FTALog::Warning(CUR_LOG_POSITION, TEXT("Track param: ") + this->InstanceAppID + TEXT(". ") + this->InstanceServerUrl);
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK), TEXT(""), this))->StartBackgroundTask();
-}
-
-void UThinkingAnalyticsPC::ObtainEventInfoAndDoPost(const FString& EventName, const FString& Properties, const FString& DynamicProperties, const FString& EventType, const FString& AddProperties)
-{
-	TSharedPtr<FJsonObject> m_PropertiesJsonObject = MakeShareable(new FJsonObject);
-	TSharedPtr<FJsonObject> m_DataJsonObject = MakeShareable(new FJsonObject);
-
-	if ( FTAUtils::IsInvalidName(EventName) )
-    {
-		FTALog::Warning(CUR_LOG_POSITION, TEXT("event name[ ") + EventName + TEXT(" ] is not valid !"));
+	// FTALog::Warning(CUR_LOG_POSITION, TEXT("Track param: ") + this->InstanceAppID + TEXT(". ") + this->InstanceServerUrl);
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
 	}
-
-    TSharedPtr<FJsonObject> PresetPropertiesJsonObject = MakeShareable(new FJsonObject);
-	TSharedRef<TJsonReader<>> PresetPropertiesReader = TJsonReaderFactory<>::Create(this->m_PresetProperties);
-	FJsonSerializer::Deserialize(PresetPropertiesReader, PresetPropertiesJsonObject);
-	for (auto& Elem : PresetPropertiesJsonObject->Values)
-    {
-		m_PropertiesJsonObject->SetField(Elem.Key, Elem.Value);
-	}
-
-	TSharedPtr<FJsonObject> SuperPropertiesJsonObject = MakeShareable(new FJsonObject);
-	TSharedRef<TJsonReader<>> SuperPropertiesReader = TJsonReaderFactory<>::Create(this->m_SuperProperties);
-	FJsonSerializer::Deserialize(SuperPropertiesReader, SuperPropertiesJsonObject);
-
-	TSharedPtr<FJsonObject> DynamicPropertiesJsonObject = MakeShareable(new FJsonObject);
-	TSharedRef<TJsonReader<>> DynamicPropertiesReader = TJsonReaderFactory<>::Create(DynamicProperties);
-	FJsonSerializer::Deserialize(DynamicPropertiesReader, DynamicPropertiesJsonObject);
-
-	TSharedPtr<FJsonObject> PropertiesJsonObject = MakeShareable(new FJsonObject);
-	TSharedRef<TJsonReader<>> PropertiesReader = TJsonReaderFactory<>::Create(Properties);
-	FJsonSerializer::Deserialize(PropertiesReader, PropertiesJsonObject);
-
-	for (auto& Elem : SuperPropertiesJsonObject->Values)
-    {
-		m_PropertiesJsonObject->SetField(Elem.Key, Elem.Value);
-	}
-
-	for (auto& Elem : DynamicPropertiesJsonObject->Values)
-    {
-		m_PropertiesJsonObject->SetField(Elem.Key, Elem.Value);
-	}
-
-	for (auto& Elem : PropertiesJsonObject->Values)
-    {
-		m_PropertiesJsonObject->SetField(Elem.Key, Elem.Value);
-	}
-
-	if ( (EventType == FTAConstants::EVENTTYPE_TRACK_FIRST) || (EventType == FTAConstants::EVENTTYPE_TRACK_UPDATE) || (EventType == FTAConstants::EVENTTYPE_TRACK_OVERWRITE) )
-    {
-		TSharedPtr<FJsonObject> AddPropertiesJsonObject = MakeShareable(new FJsonObject);
-		TSharedRef<TJsonReader<>> AddPropertiesReader = TJsonReaderFactory<>::Create(AddProperties);
-		FJsonSerializer::Deserialize(AddPropertiesReader, AddPropertiesJsonObject);
-		for (auto& Elem : AddPropertiesJsonObject->Values)
-    	{
-			m_DataJsonObject->SetField(Elem.Key, Elem.Value);
-		}
-	}
-
-	if ( (EventType == FTAConstants::EVENTTYPE_TRACK_UPDATE) || (EventType == FTAConstants::EVENTTYPE_TRACK_OVERWRITE) )
-    {
-		m_DataJsonObject->SetStringField(FTAConstants::KEY_TYPE, EventType);
-	}
-    else
-    {
-		m_DataJsonObject->SetStringField(FTAConstants::KEY_TYPE, FTAConstants::EVENTTYPE_TRACK);
-	}
-
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_EVENT_NAME, EventName);
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_TIME, FTAUtils::FormatTime(FDateTime::Now()));
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_DISTINCT_ID, this->m_DistinctID);
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_DATA_ID, FTAUtils::GetGuid());
-
-	if ( this->m_AccountID != "" )
-    {
-		m_DataJsonObject->SetStringField(FTAConstants::KEY_ACCOUNT_ID, this->m_AccountID);
-	}
-	m_DataJsonObject->SetObjectField(FTAConstants::KEY_PROPERTIES, m_PropertiesJsonObject);
-	DoPost(m_DataJsonObject);
+	this->m_EventManager->EnqueueTrackEvent(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK), TEXT(""));
 }
 
 void UThinkingAnalyticsPC::TrackFirst(const FString& EventName, const FString& Properties, const FString& DynamicProperties)
 {
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(FTAConstants::KEY_FIRST_CHECK_ID, ta_GetDeviceID());
 
@@ -201,11 +84,15 @@ void UThinkingAnalyticsPC::TrackFirst(const FString& EventName, const FString& P
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonStr);
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_FIRST), JsonStr, this))->StartBackgroundTask();
+	this->m_EventManager->EnqueueTrackEvent(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_FIRST), JsonStr);
 }
 
 void UThinkingAnalyticsPC::TrackFirstWithId(const FString& EventName, const FString& Properties, const FString& FirstCheckId, const FString& DynamicProperties)
 {
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(FTAConstants::KEY_FIRST_CHECK_ID, FirstCheckId);
 
@@ -213,11 +100,15 @@ void UThinkingAnalyticsPC::TrackFirstWithId(const FString& EventName, const FStr
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonStr);
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_FIRST), JsonStr, this))->StartBackgroundTask();
+	this->m_EventManager->EnqueueTrackEvent(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_FIRST), JsonStr);
 }
 
 void UThinkingAnalyticsPC::TrackUpdate(const FString& EventName, const FString& Properties, const FString& EventId, const FString& DynamicProperties)
 {
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(FTAConstants::KEY_EVENT_ID, EventId);
 
@@ -225,11 +116,15 @@ void UThinkingAnalyticsPC::TrackUpdate(const FString& EventName, const FString& 
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonStr);
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_UPDATE), JsonStr, this))->StartBackgroundTask();
+	this->m_EventManager->EnqueueTrackEvent(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_UPDATE), JsonStr);
 }
 
 void UThinkingAnalyticsPC::TrackOverwrite(const FString& EventName, const FString& Properties, const FString& EventId, const FString& DynamicProperties)
 {
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetStringField(FTAConstants::KEY_EVENT_ID, EventId);
 
@@ -237,149 +132,98 @@ void UThinkingAnalyticsPC::TrackOverwrite(const FString& EventName, const FStrin
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonStr);
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_OVERWRITE), JsonStr, this))->StartBackgroundTask();
+	this->m_EventManager->EnqueueTrackEvent(EventName, Properties, DynamicProperties, FString(FTAConstants::EVENTTYPE_TRACK_OVERWRITE), JsonStr);
 }
 
 void UThinkingAnalyticsPC::UserSet(const FString& Properties)
 {
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(FString(FTAConstants::EVENTTYPE_USER_SET), Properties, this))->StartBackgroundTask();
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
+	this->m_EventManager->EnqueueUserEvent(FString(FTAConstants::EVENTTYPE_USER_SET), Properties);
 }
 
 void UThinkingAnalyticsPC::UserSetOnce(const FString& Properties)
 {
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(FString(FTAConstants::EVENTTYPE_USER_SET_ONCE), Properties, this))->StartBackgroundTask();
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
+	this->m_EventManager->EnqueueUserEvent(FString(FTAConstants::EVENTTYPE_USER_SET_ONCE), Properties);
 }
 
 void UThinkingAnalyticsPC::UserAdd(const FString& Properties)
 {
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(FString(FTAConstants::EVENTTYPE_USER_ADD), Properties, this))->StartBackgroundTask();
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
+	this->m_EventManager->EnqueueUserEvent(FString(FTAConstants::EVENTTYPE_USER_ADD), Properties);
 }
 
 void UThinkingAnalyticsPC::UserUnset(const FString& Property)
 {
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
 	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 	JsonObject->SetNumberField(Property, 0);
 	FString JsonStr;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonStr);
 	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(FString(FTAConstants::EVENTTYPE_USER_UNSET), JsonStr, this))->StartBackgroundTask();
+	this->m_EventManager->EnqueueUserEvent(FString(FTAConstants::EVENTTYPE_USER_UNSET), JsonStr);
 }
 
 void UThinkingAnalyticsPC::UserAppend(const FString& Properties)
 {
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(FString(FTAConstants::EVENTTYPE_USER_APPEND), Properties, this))->StartBackgroundTask();
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
+	this->m_EventManager->EnqueueUserEvent(FString(FTAConstants::EVENTTYPE_USER_APPEND), Properties);
+}
+
+void UThinkingAnalyticsPC::UserUniqueAppend(const FString& Properties)
+{
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		return;
+	}
+	this->m_EventManager->EnqueueUserEvent(FString(FTAConstants::EVENTTYPE_USER_UNIQUE_APPEND), Properties);
 }
 
 void UThinkingAnalyticsPC::UserDelete()
 {
-	(new FAutoDeleteAsyncTask<HandleAutoDeleteAsyncTask>(FString(FTAConstants::EVENTTYPE_USER_DEL), TEXT(""), this))->StartBackgroundTask();
-}
-
-void UThinkingAnalyticsPC::UserOperations(const FString& EventType, const FString& Properties)
-{
-	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Properties);
-	FJsonSerializer::Deserialize(Reader, JsonObject);
-
-	TSharedPtr<FJsonObject> m_DataJsonObject = MakeShareable(new FJsonObject);
-
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_TYPE, EventType);
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_TIME, FTAUtils::FormatTime(FDateTime::Now()));
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_DISTINCT_ID, this->m_DistinctID);
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_DATA_ID, FTAUtils::GetGuid());
-	m_DataJsonObject->SetStringField(FTAConstants::KEY_DISTINCT_ID, this->m_DistinctID);
-
-	if ( this->m_AccountID != "" )
-    {
-		m_DataJsonObject->SetStringField(FTAConstants::KEY_ACCOUNT_ID, this->m_AccountID);
-	}
-
-	m_DataJsonObject->SetObjectField(FTAConstants::KEY_PROPERTIES, JsonObject);
-	DoPost(m_DataJsonObject);
-}
-
-void UThinkingAnalyticsPC::DoPost(TSharedPtr<FJsonObject> InDataObject)
-{
-	if ( !(this->m_EnableTrack) )
-    {
-    	FTALog::Warning(CUR_LOG_POSITION, TEXT("Instance is Disable !"));
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_STOP) || this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
 		return;
 	}
-	FString ServerData;
-	FString ServerUrl;
-	FString m_DataStr;
-	FRequestHelper* Helper = new FRequestHelper();
-
-	if ( this->InstanceMode == TAMode::NORMAL )
-    {
-		ServerUrl = this->InstanceServerUrl;
-		int32 SyncPoint = ServerUrl.Find(TEXT("sync"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
-		if ( SyncPoint != -1 )
-    	{
-			ServerUrl = ServerUrl.Left(SyncPoint);
-		}
-		ServerUrl += "/sync";
-		TSharedPtr<FJsonObject> DataJsonObject = MakeShareable(new FJsonObject);
-
-		TArray< TSharedPtr<FJsonValue> > DataArray;
-		TSharedPtr<FJsonValueObject> DataValue = MakeShareable(new FJsonValueObject(InDataObject));
-		DataArray.Add(DataValue);
-
-		DataJsonObject->SetArrayField(FTAConstants::KEY_DATA, DataArray);
-		DataJsonObject->SetStringField(FTAConstants::KEY_APP_ID, this->InstanceAppID);
-		DataJsonObject->SetStringField(FTAConstants::KEY_FLUSH_TIME, FTAUtils::GetCurrentTimeStamp());
-
-		TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ServerData);
-		FJsonSerializer::Serialize(DataJsonObject.ToSharedRef(), Writer);
-
-		Helper->CallHttpRequest(ServerUrl, ServerData, false);
-	}
-    else
-    {
-		ServerUrl = this->InstanceServerUrl;
-		int32 SyncPoint = ServerUrl.Find(TEXT("sync"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
-
-		if ( SyncPoint != -1 )
-    	{
-			ServerUrl = ServerUrl.Left(SyncPoint);
-		}
-
-		ServerUrl += "/sync_data";
-		ServerData += "appid=";
-		ServerData += this->InstanceAppID;
-		ServerData += "&deviceId=";
-		ServerData += ta_GetDeviceID();
-		ServerData += "&source=client&data=";
-		TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&m_DataStr);
-		FJsonSerializer::Serialize(InDataObject.ToSharedRef(), Writer);
-
-		FTALog::Warning(CUR_LOG_POSITION, TEXT("m_DataStr : ") + m_DataStr);
-		ServerData += FGenericPlatformHttp::UrlEncode(m_DataStr);
-		Helper->CallHttpRequest(ServerUrl, ServerData, true);
-	}
+	this->m_EventManager->EnqueueUserEvent(FString(FTAConstants::EVENTTYPE_USER_DEL), TEXT(""));
 }
 
 
 void UThinkingAnalyticsPC::ta_Login(const FString& AccountID)
 {
 	this->m_AccountID = AccountID;
-	this->m_SaveGame->SetAccountID(this->m_AccountID);
-	SaveValue(this->m_SaveGame);
+	this->m_SaveConfig->SetAccountID(this->m_AccountID);
+	SaveValue(this->m_SaveConfig);
 }
 
 void UThinkingAnalyticsPC::ta_Logout()
 {
 	this->m_AccountID = "";
-	this->m_SaveGame->SetAccountID("");
-	SaveValue(this->m_SaveGame);
+	this->m_SaveConfig->SetAccountID("");
+	SaveValue(this->m_SaveConfig);
 	FTALog::Warning(CUR_LOG_POSITION, TEXT("Logout Account !"));
 }
 
 void UThinkingAnalyticsPC::ta_Identify(const FString& DistinctID)
 {
 	this->m_DistinctID = DistinctID;
-	this->m_SaveGame->SetDistinctID(this->m_DistinctID);
-	SaveValue(this->m_SaveGame);
+	this->m_SaveConfig->SetDistinctID(this->m_DistinctID);
+	SaveValue(this->m_SaveConfig);
 }
 
 UThinkingAnalyticsPC* UThinkingAnalyticsPC::GetInstance(const FString& AppID)
@@ -390,7 +234,7 @@ UThinkingAnalyticsPC* UThinkingAnalyticsPC::GetInstance(const FString& AppID)
 	}
     else
     {
-		UThinkingAnalyticsPC** Instance = ThinkingAnalyticsSingletons.Find(*AppID);
+		UThinkingAnalyticsPC** Instance = ThinkingAnalyticsSingletons.Find(AppID);
 		if ( Instance == nullptr )
     	{
 			FTALog::Warning(CUR_LOG_POSITION, TEXT("Try Use DefaultInstance !"));
@@ -413,34 +257,29 @@ UThinkingAnalyticsPC* UThinkingAnalyticsPC::GetInstance(const FString& AppID)
 	return nullptr;
 }
 
-void UThinkingAnalyticsPC::SaveValue(UTASaveGame *SaveGame)
+void UThinkingAnalyticsPC::SaveValue(UTASaveConfig *SaveConfig)
 {
-		if( UTASaveGame* SaveGameInstance = Cast<UTASaveGame>(UGameplayStatics::CreateSaveGameObject(UTASaveGame::StaticClass())) )
-	    {
-			FTALog::Warning(CUR_LOG_POSITION, TEXT("CreateSaveGameObject Success !"));
-			SaveGameInstance->AddAll(SaveGame);
-			UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->m_AppID, FTAConstants::USER_INDEX);
-		}
-	    else
-	    {
-			FTALog::Warning(CUR_LOG_POSITION, TEXT("CreateSaveGameObject Failed !"));
-		}
+	if( !SaveConfig )
+    {
+    	FTALog::Warning(CUR_LOG_POSITION, TEXT("SaveValue CreateSaveGameObject Success !"));
+    	SaveConfig = Cast<UTASaveConfig>(UGameplayStatics::CreateSaveGameObject(UTASaveConfig::StaticClass()));
+    }
+	UGameplayStatics::SaveGameToSlot(SaveConfig, this->InstanceAppID, FTAConstants::USER_INDEX_CONFIG);
 }
 
-UTASaveGame* UThinkingAnalyticsPC::ReadValue()
+UTASaveConfig* UThinkingAnalyticsPC::ReadValue()
 {
-	UTASaveGame* SaveGame = Cast<UTASaveGame>(UGameplayStatics::LoadGameFromSlot(this->InstanceAppID, 0));
-	if( !SaveGame )
+	UTASaveConfig* SaveConfig = Cast<UTASaveConfig>(UGameplayStatics::LoadGameFromSlot(this->InstanceAppID, FTAConstants::USER_INDEX_CONFIG));
+	if( !SaveConfig )
     {
-		FTALog::Warning(CUR_LOG_POSITION, TEXT("LoadGameFromSlot Failed , NewObject !"));
-		SaveGame = NewObject<UTASaveGame>();
-		SaveGame->SetAppID(this->InstanceAppID);
+    	SaveConfig = Cast<UTASaveConfig>(UGameplayStatics::CreateSaveGameObject(UTASaveConfig::StaticClass()));
 		this->m_DistinctID = ta_GetDeviceID();
-		SaveGame->SetDistinctID(this->m_DistinctID);
-		SaveValue(SaveGame);
+		SaveConfig->SetDistinctID(this->m_DistinctID);
+		UGameplayStatics::SaveGameToSlot(SaveConfig, this->InstanceAppID, FTAConstants::USER_INDEX_CONFIG);
+    	FTALog::Warning(CUR_LOG_POSITION, TEXT("ReadValue CreateSaveGameObject Success !"));
 	}
-
-	return SaveGame;
+	FTALog::Warning(CUR_LOG_POSITION, TEXT("ReadValue Success !"));
+	return SaveConfig;
 }
 
 FString UThinkingAnalyticsPC::ta_GetDistinctID()
@@ -455,9 +294,48 @@ FString UThinkingAnalyticsPC::ta_GetDeviceID()
 
 void UThinkingAnalyticsPC::ta_SetSuperProperties(const FString& properties)
 {
-	this->m_SuperProperties = properties;
-	this->m_SaveGame->SetSuperProperties(this->m_SuperProperties);
-	SaveValue(this->m_SaveGame);
+	FString FinalProperties = FTAUtils::MergePropertiesWithOffset(properties, this->m_SuperProperties, m_TimeZone_Offset);
+	this->m_SuperProperties = FinalProperties;
+	this->m_SaveConfig->SetSuperProperties(this->m_SuperProperties);
+	SaveValue(this->m_SaveConfig);
+}
+
+void UThinkingAnalyticsPC::ta_SetTrackState(const FString& State)
+{
+	if ( State.Equals(FTAConstants::TRACK_STATUS_PAUSE) )
+	{
+		if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_NORMAL) )
+		{
+			this->m_EventManager->Flush();
+		}
+	}
+	else if ( State.Equals(FTAConstants::TRACK_STATUS_STOP) )
+	{
+		if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_NORMAL) )
+		{
+			this->m_EventManager->Flush();
+		}
+		this->m_AccountID = "";
+		this->m_DistinctID = ta_GetDeviceID();
+		this->m_SuperProperties = "";
+
+		this->m_SaveConfig->SetAccountID(this->m_AccountID);
+		this->m_SaveConfig->SetDistinctID(this->m_DistinctID);
+		this->m_SaveConfig->SetSuperProperties(this->m_SuperProperties);
+	}
+	else if ( State.Equals(FTAConstants::TRACK_STATUS_SAVE_ONLY ))
+	{
+
+	}
+	else
+	{
+		//normal
+	}
+	this->m_TrackState = State;
+	this->m_SaveConfig->SetTrackState(this->m_TrackState);
+	SaveValue(this->m_SaveConfig);
+
+	FTALog::Warning(CUR_LOG_POSITION, *FString::Printf(TEXT("current state %s"), *this->m_TrackState));
 }
 
 FString UThinkingAnalyticsPC::ta_GetSuperProperties()
@@ -465,15 +343,30 @@ FString UThinkingAnalyticsPC::ta_GetSuperProperties()
 	return this->m_SuperProperties;
 }
 
+FString UThinkingAnalyticsPC::ta_GetTrackState()
+{
+	return this->m_TrackState;
+}
+
 FString UThinkingAnalyticsPC::ta_GetPresetProperties()
 {
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+	TSharedRef<TJsonReader<>> SuperPropertiesReader = TJsonReaderFactory<>::Create(this->m_PresetProperties);
+	FJsonSerializer::Deserialize(SuperPropertiesReader, JsonObject);
+	JsonObject->SetStringField(FTAConstants::KEY_RAM, FTAUtils::GetMemoryStats());
+	JsonObject->SetStringField(FTAConstants::KEY_DISK, FTAUtils::GetDiskStats());
+	JsonObject->SetStringField(FTAConstants::KEY_FPS, FTAUtils::GetAverageFps());
 
-	return this->m_PresetProperties;
+	FString JsonStr;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonStr);
+	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+	return JsonStr;
 }
 
 void UThinkingAnalyticsPC::InitPresetProperties()
 {
 	TSharedPtr<FJsonObject> m_DataJsonObject = MakeShareable(new FJsonObject);
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_LIB, TEXT("Unreal"));
 	m_DataJsonObject->SetStringField(FTAConstants::KEY_LIB_VERSION, this->m_LibVersion);
 	m_DataJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_WIDTH, FTAUtils::GetScreenWidth());
 	m_DataJsonObject->SetNumberField(FTAConstants::KEY_SCREEN_HEIGHT, FTAUtils::GetScreenHeight());
@@ -481,15 +374,23 @@ void UThinkingAnalyticsPC::InitPresetProperties()
 	m_DataJsonObject->SetStringField(FTAConstants::KEY_OS_VERSION, FTAUtils::GetOSVersion());
 	m_DataJsonObject->SetStringField(FTAConstants::KEY_APP_VERSION, FTAUtils::GetProjectVersion());
 	m_DataJsonObject->SetStringField(FTAConstants::KEY_DEVICE_ID, ta_GetDeviceID());
-	m_DataJsonObject->SetNumberField(FTAConstants::KEY_ZONE_OFFSET, FTAUtils::GetZoneOffset());
+	m_DataJsonObject->SetNumberField(FTAConstants::KEY_ZONE_OFFSET, m_TimeZone_Offset);
 	m_DataJsonObject->SetStringField(FTAConstants::KEY_SYSTEM_LANGUAGE, FTAUtils::GetSystemLanguage());
+	m_DataJsonObject->SetStringField(FTAConstants::KEY_INSTALL_TIME, FTAUtils::GetProjectFileCreateTime(m_TimeZone_Offset));
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&m_PresetProperties);
 	FJsonSerializer::Serialize(m_DataJsonObject.ToSharedRef(), Writer);
 }
 
 void UThinkingAnalyticsPC::EnableTracking(bool EnableTrack)
 {
-	this->m_EnableTrack = EnableTrack;
+	if ( EnableTrack )
+	{
+		ta_SetTrackState(FTAConstants::TRACK_STATUS_NORMAL);
+	}
+	else
+	{
+		ta_SetTrackState(FTAConstants::TRACK_STATUS_SAVE_ONLY);
+	}
 }
 
 void UThinkingAnalyticsPC::SetEnableLog(bool Enable)
@@ -497,6 +398,37 @@ void UThinkingAnalyticsPC::SetEnableLog(bool Enable)
 	FTALog::SetEnableLog(Enable);
 }
 
+float UThinkingAnalyticsPC::ta_GetDefaultTimeZone()
+{
+	return this->m_TimeZone_Offset;
+}
+
+FString UThinkingAnalyticsPC::ta_GetAccountID()
+{
+	return this->m_AccountID;
+}
+
+FString UThinkingAnalyticsPC::ta_GetServerUrl()
+{
+	return this->InstanceServerUrl;
+}
+
+TAMode UThinkingAnalyticsPC::ta_GetMode()
+{
+	return this->InstanceMode;
+}
+
+void UThinkingAnalyticsPC::ta_Flush()
+{
+	if ( this->m_TrackState.Equals(FTAConstants::TRACK_STATUS_NORMAL) )
+	{
+		this->m_EventManager->Flush();
+	}
+	else
+	{
+		FTALog::Warning(CUR_LOG_POSITION, TEXT("disabled"));
+	}
+}
 
 
 

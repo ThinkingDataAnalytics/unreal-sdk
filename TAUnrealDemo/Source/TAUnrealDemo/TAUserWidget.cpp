@@ -45,7 +45,7 @@ void UTAUserWidget::Call_TA_TrackEvent_With_Prop(){
 void UTAUserWidget::Call_TA_TrackEvent_10000(){
     for (int i = 0; i < 10000; ++i)
     {
-        UThinkingAnalytics::Track("TEST_EVENT", TEXT("{\"key1\":\"打劫\"}"), AppID);
+        UThinkingAnalytics::Track(*FString::Printf(TEXT("TEST_EVENT%d"),i), TEXT("{\"key1\":\"打劫\"}"), AppID);
     }
 }
 
@@ -56,14 +56,14 @@ void UTAUserWidget::Call_TA_TrackEvent_Complex(){
     m_DataJsonObject->SetBoolField(TEXT("boolKey"), true);
     m_DataJsonObject->SetNumberField(TEXT("intKey"), 12);
     m_DataJsonObject->SetNumberField(TEXT("doubleKey"), 12.34);
-    m_DataJsonObject->SetStringField(TEXT("dateKey"), FDateTime::Now().ToString());
+    m_DataJsonObject->SetStringField(TEXT("dateKey"), *FString::Printf(TEXT("%s.%03d"), *FDateTime::Now().ToString(), FDateTime::UtcNow().GetMillisecond()));
 
     TSharedPtr<FJsonObject> m_DataJsonObject2 = MakeShareable(new FJsonObject);
     m_DataJsonObject2->SetStringField(TEXT("stringKey"), TEXT("string value"));
     m_DataJsonObject2->SetBoolField(TEXT("boolKey"), true);
     m_DataJsonObject2->SetNumberField(TEXT("intKey"), 12);
     m_DataJsonObject2->SetNumberField(TEXT("doubleKey"), 12.34);
-    m_DataJsonObject2->SetStringField(TEXT("dateKey"), FDateTime::Now().ToString());
+    m_DataJsonObject2->SetStringField(TEXT("dateKey"), *FString::Printf(TEXT("%s.%03d"), *FDateTime::Now().ToString(), FDateTime::UtcNow().GetMillisecond()));
 
     TArray< TSharedPtr<FJsonValue> > DataArray;
     TSharedPtr<FJsonValueObject> JsonDataValue = MakeShareable(new FJsonValueObject(m_DataJsonObject2));
@@ -72,7 +72,7 @@ void UTAUserWidget::Call_TA_TrackEvent_Complex(){
     DataArray.Add(NumberValue);
     TSharedPtr<FJsonValue> StringValue = MakeShareable(new FJsonValueString(TEXT("string value")));
     DataArray.Add(StringValue);
-    TSharedPtr<FJsonValue> Date = MakeShareable(new FJsonValueString(FDateTime::Now().ToString()));
+    TSharedPtr<FJsonValue> Date = MakeShareable(new FJsonValueString(*FString::Printf(TEXT("%s.%03d"), *FDateTime::Now().ToString(), FDateTime::UtcNow().GetMillisecond())));
     DataArray.Add(Date);
     m_DataJsonObject->SetArrayField(TEXT("arrayKey"), DataArray);
 
@@ -125,6 +125,11 @@ void UTAUserWidget::Call_TA_UserAppend(){
     UThinkingAnalytics::UserAppend("{\"appendKey\":[\"apple\", \"ball\"]}", AppID);
 }
 
+// 为List类型用户属性追加item
+void UTAUserWidget::Call_TA_UserUniqueAppend(){
+    UThinkingAnalytics::UserUniqueAppend("{\"appendKey\":[\"appleunique\", \"ball\"]}", AppID);
+}
+
 // 启用自动采集事件
 void UTAUserWidget::Call_TA_EnableAutoTrack(){
     UThinkingAnalytics::EnableAutoTrack(AppID);
@@ -136,6 +141,7 @@ void UTAUserWidget::Call_TA_EnableAutoTrackWithType(){
     EventTypeList.Emplace(TEXT("ta_app_install"));
     EventTypeList.Emplace(TEXT("ta_app_start"));
     EventTypeList.Emplace(TEXT("ta_app_end"));
+    EventTypeList.Emplace(TEXT("ta_app_crash"));
     UThinkingAnalytics::EnableAutoTrackWithType(EventTypeList, AppID);
 }
 
@@ -145,6 +151,7 @@ void UTAUserWidget::Call_TA_EnableAutoTrackWithTypeAndProperties(){
     EventTypeList.Emplace(TEXT("ta_app_install"));
     EventTypeList.Emplace(TEXT("ta_app_start"));
     EventTypeList.Emplace(TEXT("ta_app_end"));
+    EventTypeList.Emplace(TEXT("ta_app_crash"));
     UThinkingAnalytics::EnableAutoTrackWithTypeAndProperties(EventTypeList, TEXT("{\"autoTrackKey1\":\"autoTrackvalue1\",\"autoTrackKey2\":\"autoTrackvalue2\"}"), AppID);
 }
 
@@ -163,7 +170,7 @@ void UTAUserWidget::Call_TA_Flush(){
 void UTAUserWidget::Call_TA_CalibrateTime(){
     FDateTime Time = FDateTime::Now();
     //获取时间戳
-    int64 Timestamp = Time.ToUnixTimestamp();
+    int64 Timestamp = Time.ToUnixTimestamp() * 1000 + Time.GetMillisecond();
     // 入参为当前 unix 时间戳，单位为毫秒
     UThinkingAnalytics::CalibrateTime(Timestamp);
 }
@@ -205,6 +212,11 @@ void UTAUserWidget::Call_TA_SetSuperProp(){
     UThinkingAnalytics::SetSuperProperties("{\"static_super_property1\":\"value1\",\"static_super_property2\":\"value2\"}", AppID);
 }
 
+// 设置采集模式SAVE_ONLY
+void UTAUserWidget::Call_TA_SetTrackStatus(FString Status){
+    UThinkingAnalytics::SetTrackStatus(Status, AppID);
+}
+
 // 获取公共属性
 void UTAUserWidget::Call_TA_GetSuperProp(){
     UE_LOG(LogTemp, Log, TEXT("获取预置属性 = %s"), *UThinkingAnalytics::GetSuperProperties(AppID));
@@ -227,17 +239,60 @@ void UTAUserWidget::Call_TA_Updateable(){
 
 // 可重写
 void UTAUserWidget::Call_TA_TrackOverwrite(){
-     UThinkingAnalytics::TrackOverwrite(TEXT("TrackOverwrite"), TEXT("{\"TrackOverwrite_Key1\":\"TrackOverwrite_value1\"}"), TEXT("track_overwrite_event_id"));
+    UThinkingAnalytics::TrackOverwrite(TEXT("TrackOverwrite"), TEXT("{\"TrackOverwrite_Key1\":\"TrackOverwrite_value1\"}"), TEXT("track_overwrite_event_id"));
 }
 
 
 // 定义动态公共属性函数
-static FString TDReturnDyldParams() {
-   return "{\"dyld_property1\":\"value1\",\"dyld_property2\":\"value2\"}";
+FString UTAUserWidget::TDReturnDyldParams() {
+    FDateTime TDateTime = FDateTime::Now();
+    int64 SecondTimestamp = TDateTime.ToUnixTimestamp();
+    int32 MillisecondPart = TDateTime.GetMillisecond();
+    FString TimeStr = *FString::Printf(TEXT("%llu"), SecondTimestamp);
+    TimeStr += *FString::Printf(TEXT("%lld"), MillisecondPart);
+    return "{\"dyld_property1\":\"value1\",\"dyld_property2\":\"" + TimeStr + "\"}";
 }
 
 // 设置动态公共属性
 void UTAUserWidget::Call_TA_SetDynamicProp(){
-   UThinkingAnalytics::dynamicPropertiesMap.insert(std::pair<FString,FString(*)(void)>(AppID ,&TDReturnDyldParams));
+   // UThinkingAnalytics::dynamicPropertiesMap.insert(std::pair<FString,FString(*)(void)>(AppID ,&TDReturnDyldParams));
+    UThinkingAnalytics::SetDynamicSuperProperties(this, &UTAUserWidget::TDReturnDyldParams, AppID);
 }
 
+FString UTAUserWidget::TAAutoTrackProperties(FString AutoTrackEventType, FString Properties)
+{
+    FDateTime TDateTime = FDateTime::Now();
+    int64 SecondTimestamp = TDateTime.ToUnixTimestamp();
+    int32 MillisecondPart = TDateTime.GetMillisecond();
+    FString TimeStr = *FString::Printf(TEXT("%llu"), SecondTimestamp);
+    TimeStr += *FString::Printf(TEXT("%lld"), MillisecondPart);
+    return "{\"auto_property1_name\":\"" + AutoTrackEventType + "\",\"auto_property2_time\":\"" + TimeStr + "\"}";
+}
+
+void UTAUserWidget::Call_TA_SetAutoTrackEventListener()
+{   
+    TArray<FString> EventTypeList;
+    EventTypeList.Emplace(TEXT("ta_app_install"));
+    EventTypeList.Emplace(TEXT("ta_app_start"));
+    EventTypeList.Emplace(TEXT("ta_app_end"));
+    EventTypeList.Emplace(TEXT("ta_app_crash"));
+    UThinkingAnalytics::SetAutoTrackEventListener(this, &UTAUserWidget::TAAutoTrackProperties, EventTypeList, AppID);
+}
+
+void UTAUserWidget::Call_TA_EnableThirdPartySharing()
+{
+    TArray<FString> EventTypeList;
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeNONE"));
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeAPPSFLYER"));
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeIRONSOURCE"));
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeADJUST"));
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeBRANCH"));
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeTOPON"));
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeTRACKING"));
+    EventTypeList.Emplace(TEXT("TAThirdPartyShareTypeTRADPLUS"));
+
+    TSharedPtr<FJsonObject> m_DataJsonObject = MakeShareable(new FJsonObject);
+    m_DataJsonObject->SetStringField(TEXT("thirdkey1"), TEXT("thirdvalue1"));
+    m_DataJsonObject->SetStringField(TEXT("thirdkey2"), TEXT("thirdvalue2"));
+    UThinkingAnalytics::EnableThirdPartySharingWithCustomProperties(EventTypeList, m_DataJsonObject, AppID);
+}

@@ -63,6 +63,9 @@ class TAUNREALDEMO_API UTAUserWidget : public UUserWidget
     
     UFUNCTION(BlueprintCallable)
     void Call_TA_UserAppend();
+
+    UFUNCTION(BlueprintCallable)
+    void Call_TA_UserUniqueAppend();
     
     UFUNCTION(BlueprintCallable)
     void Call_TA_EnableAutoTrack();
@@ -126,4 +129,19 @@ class TAUNREALDEMO_API UTAUserWidget : public UUserWidget
 
     UFUNCTION(BlueprintCallable)
     void Call_TA_TrackOverwrite();
+
+    UFUNCTION(BlueprintCallable)
+    void Call_TA_SetTrackStatus(FString Status);
+
+    UFUNCTION(BlueprintCallable)
+    FString TDReturnDyldParams();
+
+    UFUNCTION(BlueprintCallable)
+    FString TAAutoTrackProperties(FString AutoTrackEventType, FString Properties);
+
+    UFUNCTION(BlueprintCallable)
+    void Call_TA_SetAutoTrackEventListener();
+
+    UFUNCTION(BlueprintCallable)
+    void Call_TA_EnableThirdPartySharing();
 };

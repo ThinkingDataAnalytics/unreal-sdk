@@ -1,11 +1,12 @@
 // Copyright 2021 ThinkingData. All Rights Reserved.
 #pragma once
 
-#include "TASaveGame.h"
+#include "TASaveConfig.h"
 #include "../Common/TAUtils.h"
 #include "../Common/TALog.h"
 #include "../Common/TAConstants.h"
 #include "RequestHelper.h"
+#include "EventManager.h"
 #include "ThinkingAnalyticsSettings.h"
 
 #include "Policies/CondensedJsonPrintPolicy.h"
@@ -29,8 +30,6 @@ class UThinkingAnalyticsPC : public UObject
 
 GENERATED_UCLASS_BODY()
 
-void ObtainEventInfoAndDoPost(const FString& EventName, const FString& Properties, const FString& DynamicProperties, const FString& EventType, const FString& AddProperties);
-
 public:
 
 	static UThinkingAnalyticsPC* GetInstance(const FString& AppID);
@@ -47,11 +46,23 @@ public:
 
 	FString ta_GetDistinctID();
 
+	FString ta_GetAccountID();
+
+	FString ta_GetServerUrl();
+
+	TAMode ta_GetMode();
+
+	float ta_GetDefaultTimeZone();
+
 	FString ta_GetSuperProperties();
+
+	FString ta_GetTrackState();
 
 	FString ta_GetPresetProperties();
 
 	void ta_Logout();
+
+	void ta_Flush();
 
 	void UserDelete(); 
 
@@ -65,6 +76,8 @@ public:
 
 	void UserAppend(const FString& Properties);
 
+	void UserUniqueAppend(const FString& Properties);
+
 	void EnableTracking(bool EnableTrack);
 
 	void ta_Login(const FString& AccountID);
@@ -73,7 +86,7 @@ public:
 
 	void ta_SetSuperProperties(const FString& properties);
 
-	void UserOperations(const FString& EventType, const FString& Properties);
+	void ta_SetTrackState(const FString& State);
 
 	void Track(const FString& EventName, const FString& Properties, const FString& DynamicProperties);
 
@@ -89,7 +102,9 @@ private:
 
 	TAMode InstanceMode;
 
-	UTASaveGame* m_SaveGame;
+	UTASaveConfig* m_SaveConfig;
+
+	UTAEventManager* m_EventManager;
 
 	FString InstanceServerUrl;
 
@@ -103,19 +118,19 @@ private:
 
 	FString m_PresetProperties;
 
-	bool m_EnableTrack;
+	FString m_TrackState;
+
+	float m_TimeZone_Offset;
 
 	~UThinkingAnalyticsPC();
 
-	UTASaveGame* ReadValue();
+	UTASaveConfig* ReadValue();
 
 	void InitPresetProperties();
 
-	void SaveValue(UTASaveGame *SaveGame);
+	void SaveValue(UTASaveConfig *SaveConfig);
 
-	void DoPost(TSharedPtr<FJsonObject> DataObject);
-
-	void Init(const FString& AppID, const FString& ServerUrl, TAMode Mode, FString Version);
+	void Init(const FString& AppID, const FString& ServerUrl, TAMode Mode, const FString& TimeZone, FString Version);
 
 
 };	

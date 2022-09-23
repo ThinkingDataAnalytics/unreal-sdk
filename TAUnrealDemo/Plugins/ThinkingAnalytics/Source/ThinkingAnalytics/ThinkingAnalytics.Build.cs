@@ -28,9 +28,10 @@ namespace UnrealBuildTool.Rules
             new string[]
             {
                 "Core",
+                // "SlateCore",
                 "CoreUObject",
                 "Engine",
-                "Http",
+                "HTTP",
                 "Json",
                 "JsonUtilities",
                 "Sockets",
@@ -47,18 +48,23 @@ namespace UnrealBuildTool.Rules
             {
                 // ... add private dependencies that you statically link with here ...
                 "Core",
+                // "SlateCore",
                 "Analytics",
                 "CoreUObject",
                 "Json",
                 "Engine",
                 "Projects",
-                "Http",
+                "HTTP",
                 "Json",
                 "JsonUtilities",
                 "Sockets",
                 "EngineSettings"
             }
             );
+            if (Target.Type == TargetRules.TargetType.Editor)
+            {
+                PrivateDependencyModuleNames.Add("UnrealEd");
+            }
             
             PrivateIncludePathModuleNames.AddRange(
             new string[]

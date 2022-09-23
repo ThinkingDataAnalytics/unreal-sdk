@@ -6,8 +6,11 @@ FRequestHelper::FRequestHelper()
 {
 }
 
-void FRequestHelper::CallHttpRequest(const FString& ServerUrl, const FString& Data, bool IsDebug)
+void FRequestHelper::CallHttpRequest(const FString& ServerUrl, const FString& Data, bool IsDebug, FTaskHandle* TaskHandle, uint32 EventNum)
 {
+    // FTALog::Warning(CUR_LOG_POSITION, TEXT("ServerUrl : ") + ServerUrl + TEXT(" Data : ") + Data);
+    m_TaskHandle = TaskHandle;
+    m_EventNum = EventNum;
 	FTALog::Warning(CUR_LOG_POSITION, TEXT("CallHttpRequest IsDebug: ") + UKismetStringLibrary::Conv_BoolToString(IsDebug));
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
     if ( IsDebug )
@@ -22,6 +25,7 @@ void FRequestHelper::CallHttpRequest(const FString& ServerUrl, const FString& Da
 		Request->SetContentAsString(FTAUtils::EncodeData(Data));    
     }
     Request->SetVerb("POST");
+    Request->SetTimeout(10000);
     Request->SetURL(ServerUrl);
     
     Request->OnProcessRequestComplete().BindRaw(this, &FRequestHelper::RequestComplete);
@@ -30,10 +34,15 @@ void FRequestHelper::CallHttpRequest(const FString& ServerUrl, const FString& Da
 
 void FRequestHelper::RequestComplete(FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool IsSuccess)
 {
-	FTALog::Warning(CUR_LOG_POSITION, TEXT("is success = ") + (UKismetStringLibrary::Conv_BoolToString(IsSuccess)));
+	/*FTALog::Warning(CUR_LOG_POSITION, TEXT("is success = ") + (UKismetStringLibrary::Conv_BoolToString(IsSuccess)));
     FTALog::Warning(CUR_LOG_POSITION, TEXT("is responseCode = ") + (FString::FromInt(ResponsePtr->GetResponseCode())));
-    FTALog::Warning(CUR_LOG_POSITION, TEXT("is content = ") + (ResponsePtr->GetContentAsString()));
-    if ( !EHttpResponseCodes::IsOk(ResponsePtr->GetResponseCode()) ) return;
+    FTALog::Warning(CUR_LOG_POSITION, TEXT("is content = ") + (ResponsePtr->GetContentAsString()));*/
+
+    m_TaskHandle->RequestCallback(ResponsePtr->GetContentAsString(), ResponsePtr->GetResponseCode(), IsSuccess, m_EventNum);
+    if ( !EHttpResponseCodes::IsOk(ResponsePtr->GetResponseCode()) )
+    {
+        delete this;
+    }
     // 获得返回的json数据
     // TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(ResponsePtr->GetContentAsString());
     // 把FString转成TCHAR

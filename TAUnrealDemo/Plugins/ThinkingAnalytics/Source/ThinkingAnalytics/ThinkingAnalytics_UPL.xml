@@ -24,16 +24,25 @@
             import org.json.JSONException;
             import java.util.ArrayList;
             import android.text.TextUtils;
-            import cn.thinkingdata.android.utils.TDLog;
             import java.util.Map;
+            import java.util.HashMap;
             import java.util.List;
+            import java.util.Arrays;
+            import java.lang.reflect.Field;
+            import java.lang.reflect.Method;
             import java.util.Iterator;
-            import cn.thinkingdata.android.utils.TDConstants;
+            import cn.thinkingdata.android.encrypt.TDSecreteKey;
         </insert>
     </gameActivityImportAdditions>
     <gameActivityClassAdditions>
         <insert>
             <![CDATA[
+            public static final String APP_CLICK_EVENT_NAME = "ta_app_click";
+            public static final String APP_VIEW_EVENT_NAME = "ta_app_view";
+            public static final String APP_START_EVENT_NAME = "ta_app_start";
+            public static final String APP_END_EVENT_NAME = "ta_app_end";
+            public static final String APP_CRASH_EVENT_NAME = "ta_app_crash";
+            public static final String APP_INSTALL_EVENT_NAME = "ta_app_install";
             static Map sInstances = new HashMap();
             static ArrayList sAppIds = new ArrayList();
             
@@ -68,7 +77,28 @@
                 if (mInstance == null) {
                     ThinkingAnalyticsSDK.setCustomerLibInfo("Unreal", version);
                     TDConfig config = TDConfig.getInstance((Application) getApplicationContext(), appId, serverUrl);
+                    setDisableProperties();
                     config.setModeInt(mode);
+                    if (!TextUtils.isEmpty(timeZone)) {
+                        config.setDefaultTimeZone(TimeZone.getTimeZone(timeZone));
+                    
+                    }
+                    mInstance = ThinkingAnalyticsSDK.sharedInstance(config);
+                    sInstances.put(appId, mInstance);
+                    sAppIds.add(appId);
+                }
+            }
+
+            public void taInitialize(String appId, String serverUrl, int mode, String timeZone, String version, String publicKey, int encryptVersion, String symmetricEncryption, String asymmetricEncryption) {
+            
+                ThinkingAnalyticsSDK mInstance = (ThinkingAnalyticsSDK)sInstances.get(appId);
+                if (mInstance == null) {
+                    ThinkingAnalyticsSDK.setCustomerLibInfo("Unreal", version);
+                    TDConfig config = TDConfig.getInstance((Application) getApplicationContext(), appId, serverUrl);
+                    setDisableProperties();
+                    config.setModeInt(mode);
+                    config.enableEncrypt(true);
+                    config.setSecretKey(new TDSecreteKey(publicKey, encryptVersion, symmetricEncryption, asymmetricEncryption));
                     if (!TextUtils.isEmpty(timeZone)) {
                         config.setDefaultTimeZone(TimeZone.getTimeZone(timeZone));
                     
@@ -84,6 +114,7 @@
             private static final int TA_USER_APPEND = 2;
             private static final int TA_USER_UNSET = 3;
             private static final int TA_USER_ADD = 4;
+            private static final int TA_USER_UNIQUE_APPEND = 5;
             
             
             public JSONObject taCombineJson(String properties, String dyldProperties) {
@@ -189,8 +220,17 @@
                         mInstance.user_append(propertiesObj);
                     } else if (TA_USER_ADD == type) {
                         mInstance.user_add(propertiesObj);
+                    } else if (TA_USER_UNIQUE_APPEND == type) {
+                        mInstance.user_uniqAppend(propertiesObj);
                     }
                 }
+            }
+
+            public void taSetTrackStatus(String status, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.setTrackStatus(ThinkingAnalyticsSDK.TATrackStatus.valueOf(status));
+               }
             }
             
             public void taTimeEvent(String eventName, String appid) {
@@ -247,17 +287,17 @@
                 if (null != mInstance) {
                     List<ThinkingAnalyticsSDK.AutoTrackEventType> typeList = new ArrayList<>();
                     for (String eventType : eventTypeList) {
-                        if (eventType.equals(TDConstants.APP_START_EVENT_NAME)) {
+                        if (eventType.equals(APP_START_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START);
-                        } else if (eventType.equals(TDConstants.APP_INSTALL_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_INSTALL_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
-                        } else if (eventType.equals(TDConstants.APP_END_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_END_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END);
-                        } else if (eventType.equals(TDConstants.APP_CLICK_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_CLICK_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CLICK);
-                        } else if (eventType.equals(TDConstants.APP_CRASH_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_CRASH_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CRASH);
-                        } else if (eventType.equals(TDConstants.APP_VIEW_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_VIEW_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_VIEW_SCREEN);
                         }
                     }
@@ -270,17 +310,17 @@
                 if (null != mInstance) {
                     List<ThinkingAnalyticsSDK.AutoTrackEventType> typeList = new ArrayList<>();
                     for (String eventType : eventTypeList) {
-                        if (eventType.equals(TDConstants.APP_START_EVENT_NAME)) {
+                        if (eventType.equals(APP_START_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START);
-                        } else if (eventType.equals(TDConstants.APP_INSTALL_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_INSTALL_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
-                        } else if (eventType.equals(TDConstants.APP_END_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_END_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END);
-                        } else if (eventType.equals(TDConstants.APP_CLICK_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_CLICK_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CLICK);
-                        } else if (eventType.equals(TDConstants.APP_CRASH_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_CRASH_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CRASH);
-                        } else if (eventType.equals(TDConstants.APP_VIEW_EVENT_NAME)) {
+                        } else if (eventType.equals(APP_VIEW_EVENT_NAME)) {
                             typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_VIEW_SCREEN);
                         }
                     }
@@ -312,6 +352,30 @@
                 ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
                 if (null != mInstance) {
                     mInstance.enableTracking(enabled);
+                }
+            }
+
+            public void taEnableThirdPartySharing(int types, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    mInstance.enableThirdPartySharing(types);
+                }
+            }
+
+            public void taEnableThirdPartySharing(int types, String properties, String appid) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    Map<String, Object> map = new HashMap<>();
+                    try {
+                        JSONObject json = new JSONObject(properties);
+                        for (Iterator<String> it = json.keys(); it.hasNext(); ) {
+                            String key = it.next();
+                            map.put(key, json.optString(key));
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    mInstance.enableThirdPartySharing(types, map);
                 }
             }
 
@@ -380,6 +444,83 @@
                 String token =  UUID.randomUUID().toString();
                 sInstances.put(token,mInstance);
                 return token;
+            }
+
+            public native String getAutoTrackEventProperties(String eventType, String properties, String appid);
+
+
+            public void taEnableAutoTrackWithListener(final String appid, String[] eventTypeList) {
+                ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+                if (null != mInstance) {
+                    List<ThinkingAnalyticsSDK.AutoTrackEventType> typeList = new ArrayList<>();
+                    for (String eventType : eventTypeList) {
+                        if (eventType.equals(APP_START_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START);
+                        } else if (eventType.equals(APP_INSTALL_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
+                        } else if (eventType.equals(APP_END_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END);
+                        } else if (eventType.equals(APP_CLICK_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CLICK);
+                        } else if (eventType.equals(APP_CRASH_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CRASH);
+                        } else if (eventType.equals(APP_VIEW_EVENT_NAME)) {
+                            typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_VIEW_SCREEN);
+                        }
+                    }
+                    mInstance.enableAutoTrack(typeList, new ThinkingAnalyticsSDK.AutoTrackEventListener() {
+                        @Override
+                        public JSONObject eventCallback(ThinkingAnalyticsSDK.AutoTrackEventType autoTrackEventType, JSONObject jsonObject) {
+                            String eventType = "";
+                            if (autoTrackEventType.equals(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START)) {
+                                eventType = APP_START_EVENT_NAME;
+                            } else if (autoTrackEventType.equals(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END)) {
+                                eventType = APP_END_EVENT_NAME;
+                            } else if (autoTrackEventType.equals(ThinkingAnalyticsSDK.AutoTrackEventType.APP_VIEW_SCREEN)) {
+                                eventType = APP_VIEW_EVENT_NAME;
+                            } else if (autoTrackEventType.equals(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CRASH)) {
+                                eventType = APP_CRASH_EVENT_NAME;
+                            } else if (autoTrackEventType.equals(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL)) {
+                                eventType = APP_INSTALL_EVENT_NAME;
+                            } else if (autoTrackEventType.equals(ThinkingAnalyticsSDK.AutoTrackEventType.APP_CLICK)) {
+                                eventType = APP_CLICK_EVENT_NAME;
+                            }
+                            JSONObject retJSONObject = null;
+                            try {
+                                retJSONObject = new JSONObject(getAutoTrackEventProperties(eventType, jsonObject.toString(), appid));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            return retJSONObject;
+                        }
+                    });
+                }
+            }
+
+            public static void setDisableProperties() {
+                try {
+                    Class<?> presetClazz = Class.forName("cn.thinkingdata.android.TDPresetProperties");
+                    Field field = presetClazz.getField("disableList");
+                    field.setAccessible(true);
+                    Class<?> listClazz = field.getType();
+                    Method toArrayMethod = listClazz.getMethod("toArray", Object[].class);
+                    Method sizeMethod = listClazz.getMethod("size");
+                    int size = Integer.parseInt(String.valueOf(sizeMethod.invoke(field.get(presetClazz))));
+                    if (size != 0) {
+                        String[] array = (String[]) toArrayMethod.invoke(field.get(presetClazz), new Object[size]);
+                        if (array != null) {
+                            if (!Arrays.asList(array).contains("#fps")) {
+                                Method addAllMethod = listClazz.getMethod("add", Object.class);
+                                addAllMethod.invoke(field.get(presetClazz), "#fps");
+                            }
+                        }
+                    } else {
+                        Method addAllMethod = listClazz.getMethod("add", Object.class);
+                        addAllMethod.invoke(field.get(presetClazz), "#fps");
+                    }
+                } catch (Exception e) {
+                    //ignored
+                }
             }
             ]]>
         </insert>

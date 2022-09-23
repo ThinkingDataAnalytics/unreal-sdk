@@ -13,6 +13,11 @@
 
 typedef FString(*GetDynamicSuperProperties)();
 
+DECLARE_DELEGATE_RetVal(FString, TADynamicSuperPropRetValDelegate);
+DECLARE_DELEGATE_RetVal_TwoParams(FString, TAAutoTrackEventRetValDelegate, FString, FString);
+
+static TMap<FString, TADynamicSuperPropRetValDelegate> TADynamicSuperPropMethods;
+
 UCLASS()
 class THINKINGANALYTICS_API UThinkingAnalytics : public UObject
 {
@@ -22,15 +27,21 @@ private:
     
     static FString GetDynamicProperties(const FString& AppId = "");
 
+    static void SetDynamicProperties(TADynamicSuperPropRetValDelegate Del, const FString& AppId = "");
+
+    static void TASetAutoTrackEventListener(TAAutoTrackEventRetValDelegate Del, const TArray<FString>& EventTypeList, const FString& AppId = "");
+
+
 public:
-    
-    static std::map<FString,GetDynamicSuperProperties> dynamicPropertiesMap;
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void Initialize();
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void InitializeInstance(const FString& appid, const FString& serverurl, TAMode mode, bool bEnableLog, const FString& timeZone);
+
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void InitializeEncryptInstance(const FString& appid, const FString& serverurl, TAMode mode, bool bEnableLog, const FString& timeZone, bool bEnableEncrypt, const FString& EncryptPublicKey, int EncryptVersion, const FString& SymmetricEncryption, const FString& AsymmetricEncryption);
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void CalibrateTime(int64 timestamp);
@@ -44,32 +55,56 @@ public:
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void EnableAutoTrackWithTypeAndProperties(const TArray<FString>& EventTypeList, const FString& Properties, const FString& AppId = "");
 
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void EnableAutoTrackWithTypeAndProperties(const TArray<FString>& EventTypeList, TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
+
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void CalibrateTimeWithNtp(const FString& urlString);
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void Track(const FString& EventName, const FString& Properties, const FString& AppId = "");
+
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void Track(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void TrackFirst(const FString& EventName, const FString& Properties, const FString& AppId = "");
 
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void TrackFirst(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
+
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void TrackFirstWithId(const FString& EventName, const FString& Properties, const FString& FirstCheckId, const FString& AppId = "");
+
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void TrackFirstWithId(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& FirstCheckId, const FString& AppId = "");
 
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void TrackUpdate(const FString& EventName, const FString& Properties, const FString& EventId, const FString& AppId = "");
 
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void TrackUpdate(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& EventId, const FString& AppId = "");
+
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void TrackOverwrite(const FString& EventName, const FString& Properties, const FString& EventId, const FString& AppId = "");
+
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void TrackOverwrite(const FString& EventName, TSharedPtr<FJsonObject> Properties, const FString& EventId, const FString& AppId = "");
 
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void TimeEvent(const FString& EventName, const FString& AppId = "");
 
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void UserSet(const FString& Properties, const FString& AppId = "");
+
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void UserSet(TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void UserSetOnce(const FString& Properties, const FString& AppId = "");
+
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void UserSetOnce(TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void UserAdd(const FString& Property, const float Value, const FString& AppId = "");
@@ -79,6 +114,15 @@ public:
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void UserAppend(const FString& Properties, const FString& AppId = "");
+
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void UserAppend(TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
+
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void UserUniqueAppend(const FString& Properties, const FString& AppId = "");
+
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void UserUniqueAppend(TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
     
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void UserDelete(const FString& AppId = "");
@@ -113,6 +157,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static void SetSuperProperties(const FString& properties, const FString& AppId = "");
 
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void SetSuperProperties(TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
+
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void SetTrackStatus(const FString& Status = "NORMAL", const FString& AppId = "");
+
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static FString GetSuperProperties(const FString& AppId = "");
 
@@ -122,5 +172,27 @@ public:
     UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
     static FString CreateLightInstance(const FString& AppId = "");
 
-};
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void EnableThirdPartySharing(const TArray<FString>& EventTypeList, const FString& AppId = "");
 
+    // UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static void EnableThirdPartySharingWithCustomProperties(const TArray<FString>& EventTypeList, TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
+
+    template <class UserClass>
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static inline void SetDynamicSuperProperties(UserClass* TarObj, typename TMemFunPtrType<false, UserClass, FString()>::Type InMethod, const FString& AppId = "")
+    {
+        TADynamicSuperPropRetValDelegate Del;
+        Del.BindUObject(TarObj, InMethod);
+        SetDynamicProperties(Del, AppId);
+    }
+
+    template <class UserClass>
+    UFUNCTION(BlueprintCallable, Category = "ThinkingAnalytics")
+    static inline void SetAutoTrackEventListener(UserClass* TarObj, typename TMemFunPtrType<false, UserClass, FString(FString, FString)>::Type InMethod, const TArray<FString>& EventTypeList, const FString& AppId = "")
+    {
+        TAAutoTrackEventRetValDelegate Del;
+        Del.BindUObject(TarObj, InMethod);
+        TASetAutoTrackEventListener(Del, EventTypeList, AppId);
+    }
+};

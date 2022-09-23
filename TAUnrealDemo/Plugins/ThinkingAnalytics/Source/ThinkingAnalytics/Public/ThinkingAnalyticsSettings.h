@@ -35,6 +35,26 @@ public:
     UPROPERTY(Config, EditAnywhere, Category = "ThinkingAnalytics", meta = (DisplayName = "Enable Log"))
     bool bEnableLog;
 
+    //Enable Encrypt
+    UPROPERTY(Config, EditAnywhere, Category = "ThinkingAnalytics", meta = (DisplayName = "Enable Encrypt"))
+    bool bEnableEncrypt;
+
+    //EncryptPublicKey
+    UPROPERTY(Config, EditAnywhere, Category = "ThinkingAnalytics", meta = (DisplayName = "EncryptPublicKey"))
+    FString EncryptPublicKey;
+
+    //Encrypt Version
+    UPROPERTY(Config, EditAnywhere, Category = "ThinkingAnalytics", meta = (DisplayName = "EncryptVersion"))
+    int EncryptVersion;
+
+    //SymmetricEncryption
+    UPROPERTY(Config, EditAnywhere, Category = "ThinkingAnalytics", meta = (DisplayName = "SymmetricEncryption"))
+    FString SymmetricEncryption;
+
+    //AsymmetricEncryption
+    UPROPERTY(Config, EditAnywhere, Category = "ThinkingAnalytics", meta = (DisplayName = "AsymmetricEncryption"))
+    FString AsymmetricEncryption;
+
     // runs SDK in the given timezone
     UPROPERTY(Config, EditAnywhere, Category = "ThinkingAnalytics", meta = (DisplayName = "TimeZone"))
     FString TimeZone;

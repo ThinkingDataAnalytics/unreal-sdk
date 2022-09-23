@@ -6,6 +6,9 @@
 #include <string>
 #include "ThinkingAnalyticsSettings.h"
 
+DECLARE_DELEGATE_RetVal_TwoParams(FString, TAAutoTrackEventRetValDelegate, FString, FString);
+static TMap<FString, TAAutoTrackEventRetValDelegate> TAAutoTrackEventAndroidMethods;
+
 namespace thinkinganalytics 
 {
     extern "C"
@@ -40,6 +43,8 @@ namespace thinkinganalytics
 
         void jni_ta_initializeInstance(FString appid, FString serverurl, TAMode mode, bool bEnableLog, FString timeZone, FString version);
 
+        void jni_ta_initializeEncryptInstance(FString appid, FString serverurl, TAMode mode, bool bEnableLog, FString timeZone, FString version, bool bEnableEncrypt, FString EncryptPublicKey, int EncryptVersion, FString SymmetricEncryption, FString AsymmetricEncryption);
+
         void jni_ta_track_update(FString eventName, FString properties, FString eventId, FString dyldproperties, FString appid);
 
         void jni_ta_track_overwrite(FString eventName, FString properties, FString eventId, FString dyldproperties, FString appid);
@@ -57,6 +62,8 @@ namespace thinkinganalytics
         void jni_ta_user_unset(FString property, FString appid);
 
         void jni_ta_user_append(FString properties, FString appid);
+
+        void jni_ta_user_unique_append(FString properties, FString appid);
 
         void jni_ta_user_add(FString properties, FString appid);
 
@@ -78,7 +85,12 @@ namespace thinkinganalytics
 
         void jni_ta_set_superProperties(FString properties, FString appid);
 
+        void jni_ta_set_trackStatus(FString status, FString appid);
+
+        void jni_ta_setAutoTrackEventListener(TAAutoTrackEventRetValDelegate Del, const TArray<FString> EventTypeList, const FString& AppId);
+
+        void jni_ta_enableThirdPartySharing(int types, FString appid);
+
+        void jni_ta_enableThirdPartySharingWithCustomProperties(int typeList, FString properties, FString appId);
     }
 }
-
-

@@ -5,7 +5,8 @@
 #include "ThinkingAnalyticsSettings.h"
 #include "../Common/TAConstants.h"
 
-
+DECLARE_DELEGATE_RetVal_TwoParams(FString, TAAutoTrackEventRetValDelegate, FString, FString);
+static TMap<FString, TAAutoTrackEventRetValDelegate> TAAutoTrackEventIOSMethods;
 
 class ThinkingAnalyticsCpp 
 {
@@ -22,6 +23,8 @@ public:
     static void ta_calibrate_time(long timestamp);
 
     static void ta_initialize(FString appid, FString serverurl, TAMode mode, bool bEnableLog, FString timeZone, FString version);
+
+    static void ta_initializeEncryptInstance(FString appid, FString serverurl, TAMode mode, bool bEnableLog, FString timeZone, FString version, FString EncryptPublicKey, int EncryptVersion, FString SymmetricEncryption, FString AsymmetricEncryption);
 
     static void ta_initialize(const UThinkingAnalyticsSettings *defaultSettings, FString version);
 
@@ -53,6 +56,8 @@ public:
 
     static void ta_user_append(FString properties, FString appid = "");
 
+    static void ta_user_unique_append(FString properties, FString appid = "");
+
     static void ta_user_add(FString properties, FString appid = "");
 
     static void ta_user_delete(FString appid = "");
@@ -73,10 +78,15 @@ public:
 
     static void ta_set_superProperties(FString properties, FString appid = "");
 
+    static void ta_set_trackStatus(FString status, FString appid= "");
+
     static FString ta_get_distinct_id(FString appid = "");
 
     static FString ta_get_device_id(FString appid = "");
 
+    static void ta_setAutoTrackEventListener(TAAutoTrackEventRetValDelegate Del, TArray<FString> EventTypeList, FString AppId = "");
 
+    static void ta_enableThirdPartySharing(int types, FString appId = "");
 
+    static void ta_enableThirdPartySharingWithCustomProperties(int typeList, FString properties, FString appId = "");
 };

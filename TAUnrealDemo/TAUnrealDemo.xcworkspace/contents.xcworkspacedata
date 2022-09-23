@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "container:"      name = "Engine">
+      <FileRef
+         location = "group:Intermediate/ProjectFiles/UE5.xcodeproj">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"      name = "Games">
+      <FileRef
+         location = "group:Intermediate/ProjectFiles/TAUnrealDemo.xcodeproj">
+      </FileRef>
+   </Group>
+   <Group
+      location = "container:"      name = "Programs">
+      <FileRef
+         location = "group:Intermediate/ProjectFiles/UnrealHeaderTool.xcodeproj">
+      </FileRef>
+   </Group>
+</Workspace>

@@ -71,16 +71,36 @@ namespace thinkinganalytics {
                 jni_ta_enable_log();
             }
             
-            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+            if ( defaultSettings->bEnableEncrypt)
+            {
+                //callEncrypt
+                JNIEnv* env = FAndroidApplication::GetJavaEnv();
 
-            jmethodID initialize =
-                FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taInitialize", "(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V", false);
-            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->AppID));
-            jstring serverUrl = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->ServerUrl));
-            jstring versionName = env->NewStringUTF(TCHAR_TO_UTF8(*version));
-            uint8 mode = (uint8) defaultSettings->Mode;
-            jstring timeZone = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->TimeZone));
-            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, initialize, appID, serverUrl, mode, timeZone, versionName);
+                jmethodID initialize =
+                    FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taInitialize", "(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V", false);
+                jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->AppID));
+                jstring serverUrl = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->ServerUrl));
+                jstring versionName = env->NewStringUTF(TCHAR_TO_UTF8(*version));
+                uint8 mode = (uint8) defaultSettings->Mode;
+                jstring timeZone = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->TimeZone));
+                jstring encryptPublicKey = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->EncryptPublicKey));
+                jstring symmetricEncryption = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->SymmetricEncryption));
+                jstring asymmetricEncryption = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->AsymmetricEncryption));
+                FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, initialize, appID, serverUrl, mode, timeZone, versionName, encryptPublicKey, defaultSettings->EncryptVersion, symmetricEncryption, asymmetricEncryption);
+            }
+            else
+            {
+                JNIEnv* env = FAndroidApplication::GetJavaEnv();
+
+                jmethodID initialize =
+                    FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taInitialize", "(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V", false);
+                jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->AppID));
+                jstring serverUrl = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->ServerUrl));
+                jstring versionName = env->NewStringUTF(TCHAR_TO_UTF8(*version));
+                uint8 mode = (uint8) defaultSettings->Mode;
+                jstring timeZone = env->NewStringUTF(TCHAR_TO_UTF8(*defaultSettings->TimeZone));
+                FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, initialize, appID, serverUrl, mode, timeZone, versionName);
+            }
         }
     
         void jni_ta_initializeInstance(FString appid, FString serverurl, TAMode mode, bool bEnableLog, FString timeZone, FString version)
@@ -99,6 +119,31 @@ namespace thinkinganalytics {
             uint8 mode1 = (uint8)mode;
             jstring timeZone1 = env->NewStringUTF(TCHAR_TO_UTF8(*timeZone));
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, initialize, appID, serverUrl, mode1, timeZone1, versionName);
+        }
+
+        void jni_ta_initializeEncryptInstance(FString appid, FString serverurl, TAMode mode, bool bEnableLog, FString timeZone, FString version, bool bEnableEncrypt, FString EncryptPublicKey, int EncryptVersion, FString SymmetricEncryption, FString AsymmetricEncryption)
+        {
+            if ( bEnableEncrypt )
+            {
+                //callEncrypt
+                JNIEnv* env = FAndroidApplication::GetJavaEnv();
+
+                jmethodID initialize =
+                    FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taInitialize", "(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V", false);
+                jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+                jstring serverUrl = env->NewStringUTF(TCHAR_TO_UTF8(*serverurl));
+                jstring versionName = env->NewStringUTF(TCHAR_TO_UTF8(*version));
+                uint8 mode1 = (uint8)mode;
+                jstring timeZone1 = env->NewStringUTF(TCHAR_TO_UTF8(*timeZone));
+                jstring encryptPublicKey = env->NewStringUTF(TCHAR_TO_UTF8(*EncryptPublicKey));
+                jstring symmetricEncryption = env->NewStringUTF(TCHAR_TO_UTF8(*SymmetricEncryption));
+                jstring asymmetricEncryption = env->NewStringUTF(TCHAR_TO_UTF8(*AsymmetricEncryption));
+                FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, initialize, appID, serverUrl, mode1, timeZone1, versionName, encryptPublicKey, EncryptVersion, symmetricEncryption, asymmetricEncryption);
+            }
+            else
+            {
+                jni_ta_initializeInstance(appid, serverurl, mode, bEnableLog, timeZone, version);
+            }
         }
         
         void jni_ta_track(FString eventName, FString properties, FString dyldproperties, FString appid)
@@ -310,6 +355,20 @@ namespace thinkinganalytics {
             env->DeleteLocalRef(propertiesString);
             env->DeleteLocalRef(appID);
         }
+
+        void jni_ta_user_unique_append(FString properties, FString appid)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+            jstring propertiesString = env->NewStringUTF(TCHAR_TO_UTF8(*properties));
+
+            jmethodID userOperations =
+                FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taUserOperations", "(ILjava/lang/String;Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+            
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, userOperations, 5, propertiesString, appID);
+            env->DeleteLocalRef(propertiesString);
+            env->DeleteLocalRef(appID);
+        }
     
         void jni_ta_user_unset(FString property, FString appid) {
             JNIEnv* env = FAndroidApplication::GetJavaEnv();
@@ -498,6 +557,60 @@ namespace thinkinganalytics {
             env->ReleaseStringUTFChars(lightInstanceId,nativeName);
             env->DeleteLocalRef(lightInstanceId);
             return ResultName;
+        }
+
+        void jni_ta_set_trackStatus(FString status, FString appid)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+            jmethodID setTrackStatus = FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taSetTrackStatus", "(Ljava/lang/String;Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+            jstring trackStatus = env->NewStringUTF(TCHAR_TO_UTF8(*status));
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, setTrackStatus, trackStatus, appID);
+        }
+
+        void jni_ta_setAutoTrackEventListener(TAAutoTrackEventRetValDelegate Del, TArray<FString> eventTypeList, const FString& AppId)
+        {
+            TAAutoTrackEventAndroidMethods.Emplace(*AppId, Del);
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+
+            jmethodID autoTrack =
+                FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taEnableAutoTrackWithListener", "(Ljava/lang/String;[Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*AppId));
+            auto stringArray = NewScopedJavaObject(env, (jobjectArray)env->NewObjectArray(eventTypeList.Num(), FJavaWrapper::JavaStringClass, NULL));
+            for (uint32 param = 0; param < eventTypeList.Num(); param++)
+            {
+            auto stringValue = FJavaHelper::ToJavaString(env, eventTypeList[param]);
+            env->SetObjectArrayElement(*stringArray, param, *stringValue);
+            }
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, autoTrack, appID, *stringArray);
+        }
+
+        JNI_METHOD jstring Java_com_epicgames_ue4_GameActivity_getAutoTrackEventProperties(JNIEnv* jenv, jobject thiz, jstring eventType, jstring propertiesStr, jstring AppId)
+        {
+            FString jsonString = "";
+            TAAutoTrackEventRetValDelegate* delegate = TAAutoTrackEventAndroidMethods.Find(*FJavaHelper::FStringFromParam(jenv, AppId));
+            if(delegate != nullptr)
+            {
+                jsonString = delegate->Execute(FJavaHelper::FStringFromParam(jenv, eventType), FJavaHelper::FStringFromParam(jenv, propertiesStr));
+            }
+            return jenv->NewStringUTF(TCHAR_TO_UTF8(*jsonString));
+        }
+
+        void jni_ta_enableThirdPartySharing(int types, FString appid)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+            jmethodID enableMethod = FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taEnableThirdPartySharing", "(ILjava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, enableMethod, (jint)types, appID);
+        }
+
+        void jni_ta_enableThirdPartySharingWithCustomProperties(int typeList, FString properties, FString appId)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+            jmethodID enableMethod = FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taEnableThirdPartySharing", "(ILjava/lang/String;Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appId));
+            jstring propertiesStr = env->NewStringUTF(TCHAR_TO_UTF8(*properties));
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, enableMethod, (jint)typeList, propertiesStr,appID);
         }
     }
 }

@@ -3,6 +3,7 @@
 
 #include "TALog.h"
 
+#include "ThinkingAnalytics.h"
 #include "Misc/App.h"
 #include "Misc/Compression.h"
 #include "Misc/CompressionFlags.h"
@@ -22,6 +23,12 @@
 #include "Kismet/KismetTextLibrary.h"
 #include "Internationalization/Internationalization.h"
 #include "Internationalization/Culture.h"
+#include "Kismet/KismetStringLibrary.h"
+#include "Policies/CondensedJsonPrintPolicy.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonWriter.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
 
 class FTAUtils 
 {
@@ -35,7 +42,9 @@ public:
 
 	static uint32 GetScreenHeight();
 
-	static int32 GetZoneOffset();
+	static float GetZoneOffset();
+
+	static float GetZoneOffsetWithTimeZone(const FString& TimeZone);
 
 	static FString GetGuid();
 
@@ -63,7 +72,21 @@ public:
 
 	static FString FormatTime(FDateTime DateTime);
 
+	static FString FormatTimeWithOffset(FDateTime DateTime, float Zone_Offset);
+
+	static void FormatCustomTimeWithOffset(FString& DateTimeStr, float Zone_Offset);
+
 	static FString EncodeData(const FString& UnprocessedData);
+
+	static FString GetAverageFps();
+
+	static FString GetMemoryStats();
+
+	static FString GetDiskStats();
+
+	static FString GetProjectFileCreateTime(float Zone_Offset);
+
+	static FString MergePropertiesWithOffset(const FString& FirstProp, const FString& SecondProp, float Zone_Offset);
 
 private:
 
