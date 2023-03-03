@@ -5,4 +5,5 @@ This is the [ThinkingData](https://www.thinkingdata.cn)™ SDK for Unreal. Docum
 
 - [中文](https://docs.thinkingdata.cn/ta-manual/latest/installation/installation_menu/client_sdk/game_engine_sdk_installation/unreal_sdk_installation/unreal_sdk_installation.html)
 - [English](https://docs.thinkingdata.cn/ta-manual/latest/en/99oQ5UeGzK09DWfPCaQwCg/installation/client_sdk/game_engine_installation/unreal_sdk_installation/unreal_sdk_installation.html)
+- [日本語](https://docs.thinkingdata.io/ta-manual/v4.0/ja/installation/installation_menu/client_sdk/game_engine_sdk_installation/unreal_sdk_installation/unreal_sdk_installation.html)
 ---
