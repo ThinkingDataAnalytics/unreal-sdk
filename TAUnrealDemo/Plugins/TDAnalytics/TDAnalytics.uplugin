@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "2.0.0",
+	"FriendlyName": "TDAnalytics",
+	"Description": "Analytics Provider by Thinking Data",
+	"Category": "Analytics",
+	"CreatedBy": "Thinking Data Ltd.",
+	"CreatedByURL": "https://www.thinkingdata.cn",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EnabledByDefault" : true,
+
+	"Modules":
+	[
+		{
+			"Name": "TDAnalytics",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		}
+	]
+}

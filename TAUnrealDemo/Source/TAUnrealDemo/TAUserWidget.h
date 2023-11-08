@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "ThinkingAnalytics.h"
+#include "TDAnalytics.h"
 
 #include "TAUserWidget.generated.h"
 
