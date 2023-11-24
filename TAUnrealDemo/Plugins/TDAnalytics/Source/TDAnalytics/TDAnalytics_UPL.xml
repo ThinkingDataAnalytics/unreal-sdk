@@ -1,12 +1,14 @@
 <root xmlns:android="http://schemas.android.com/apk/res/android">
 
     <resourceCopies>
-    <copyFile  src = "$S(PluginDir)/../ThirdParty/Android/TDAnalyticsSDK.aar"  dst = "$S(BuildDir)/gradle/app/libs/TDAnalyticsSDK.aar" /> 
+    <copyFile  src = "$S(PluginDir)/../ThirdParty/Android/TDAnalytics.aar"  dst = "$S(BuildDir)/gradle/app/libs/TDAnalytics.aar" /> 
+    <copyFile  src = "$S(PluginDir)/../ThirdParty/Android/TDCore.aar"  dst = "$S(BuildDir)/gradle/app/libs/TDCore.aar" /> 
     </resourceCopies>
     <buildGradleAdditions>
         <insert>
             dependencies {
-                implementation files('libs/TDAnalyticsSDK.aar')
+                implementation files('libs/TDAnalytics.aar')
+                implementation files('libs/TDCore.aar')
             }
         </insert>
     </buildGradleAdditions>
@@ -18,7 +20,7 @@
         <insert>
             import android.app.Application;
             import android.text.TextUtils;
-            import cn.thinkingdata.android.*;
+            import cn.thinkingdata.analytics.*;
             import java.util.TimeZone;
             import org.json.JSONObject;
             import org.json.JSONException;
@@ -31,7 +33,7 @@
             import java.lang.reflect.Field;
             import java.lang.reflect.Method;
             import java.util.Iterator;
-            import cn.thinkingdata.android.encrypt.TDSecreteKey;
+            import cn.thinkingdata.analytics.encrypt.TDSecreteKey;
         </insert>
     </gameActivityImportAdditions>
     <gameActivityClassAdditions>
@@ -78,7 +80,13 @@
                     ThinkingAnalyticsSDK.setCustomerLibInfo("Unreal", version);
                     TDConfig config = TDConfig.getInstance((Application) getApplicationContext(), appId, serverUrl);
                     setDisableProperties();
-                    config.setModeInt(mode);
+                    if (mode == 1) {
+                        config.setMode(TDConfig.ModeEnum.DEBUG);
+                    } else if (mode == 2) {
+                        config.setMode(TDConfig.ModeEnum.DEBUG_ONLY);
+                    } else {
+                        config.setMode(TDConfig.ModeEnum.NORMAL);
+                    }
                     if (!TextUtils.isEmpty(timeZone)) {
                         config.setDefaultTimeZone(TimeZone.getTimeZone(timeZone));
                     
@@ -96,7 +104,13 @@
                     ThinkingAnalyticsSDK.setCustomerLibInfo("Unreal", version);
                     TDConfig config = TDConfig.getInstance((Application) getApplicationContext(), appId, serverUrl);
                     setDisableProperties();
-                    config.setModeInt(mode);
+                    if (mode == 1) {
+                        config.setMode(TDConfig.ModeEnum.DEBUG);
+                    } else if (mode == 2) {
+                        config.setMode(TDConfig.ModeEnum.DEBUG_ONLY);
+                    } else {
+                        config.setMode(TDConfig.ModeEnum.NORMAL);
+                    }
                     config.enableEncrypt(true);
                     config.setSecretKey(new TDSecreteKey(publicKey, encryptVersion, symmetricEncryption, asymmetricEncryption));
                     if (!TextUtils.isEmpty(timeZone)) {
@@ -278,7 +292,11 @@
                 ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
                 if (null != mInstance) {
                     // START, END, INSTALL
-                    mInstance.enableAutoTrack(35);
+                    List<ThinkingAnalyticsSDK.AutoTrackEventType> typeList = new ArrayList<>();
+                    typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_START);
+                    typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_INSTALL);
+                    typeList.add(ThinkingAnalyticsSDK.AutoTrackEventType.APP_END);
+                    mInstance.enableAutoTrack(typeList);
                 }
             }
             
@@ -499,7 +517,7 @@
 
             public static void setDisableProperties() {
                 try {
-                    Class<?> presetClazz = Class.forName("cn.thinkingdata.android.TDPresetProperties");
+                    Class<?> presetClazz = Class.forName("cn.thinkingdata.analytics.TDPresetProperties");
                     Field field = presetClazz.getField("disableList");
                     field.setAccessible(true);
                     Class<?> listClazz = field.getType();

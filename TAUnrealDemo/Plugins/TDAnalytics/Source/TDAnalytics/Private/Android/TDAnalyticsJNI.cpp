@@ -5,7 +5,7 @@
 #include "Android/AndroidApplication.h"
 #include "TDAnalyticsSettings.h"
 
-#define THINKING_ANALYTICS_CLASS_NAME "cn/thinkingdata/android/ThinkingAnalyticsSDK"
+#define THINKING_ANALYTICS_CLASS_NAME "cn/thinkingdata/analytics/ThinkingAnalyticsSDK"
 
 #ifdef LOG_TAG
 #undef LOG_TAG
