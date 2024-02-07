@@ -37,11 +37,12 @@ void FRequestHelper::RequestComplete(FHttpRequestPtr RequestPtr, FHttpResponsePt
 	/*FTALog::Warning(CUR_LOG_POSITION, TEXT("is success = ") + (UKismetStringLibrary::Conv_BoolToString(IsSuccess)));
     FTALog::Warning(CUR_LOG_POSITION, TEXT("is responseCode = ") + (FString::FromInt(ResponsePtr->GetResponseCode())));
     FTALog::Warning(CUR_LOG_POSITION, TEXT("is content = ") + (ResponsePtr->GetContentAsString()));*/
-
-    m_TaskHandle->RequestCallback(ResponsePtr->GetContentAsString(), ResponsePtr->GetResponseCode(), IsSuccess, m_EventNum);
-    if ( !EHttpResponseCodes::IsOk(ResponsePtr->GetResponseCode()) )
-    {
-        delete this;
+    if(ResponsePtr.IsValid()){
+        m_TaskHandle->RequestCallback(ResponsePtr->GetContentAsString(), ResponsePtr->GetResponseCode(), IsSuccess, m_EventNum);
+        if ( !EHttpResponseCodes::IsOk(ResponsePtr->GetResponseCode()) )
+        {
+            delete this;
+        }
     }
 
     // TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(ResponsePtr->GetContentAsString());
