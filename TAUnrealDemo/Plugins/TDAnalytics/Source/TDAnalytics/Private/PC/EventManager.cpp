@@ -8,6 +8,7 @@
 #if WITH_EDITOR
 #include "Editor/EditorEngine.h"
 #include "Editor/UnrealEdEngine.h"
+#include "Engine/GameEngine.h"
 #else
 #include "Engine/GameEngine.h"
 #endif
@@ -141,12 +142,17 @@ void UTAEventManager::BindInstance(UTDAnalyticsPC *Instance)
 	m_Instance = Instance;
 	//start timer
 	//event num & time
-	m_GameInstance = GetGameInstance();
-	m_GameInstance->AddToRoot();
-	m_GameInstance->GetTimerManager().SetTimer(WorkHandle, this, &UTAEventManager::Flush, 15.0f, true);
+	StartFlushTimer();
 
 	m_TaskHandle = new FTaskHandle(Instance);
 	m_RunnableThread = FRunnableThread::Create(m_TaskHandle, TEXT("TaskHandle"), 128 * 1024, TPri_AboveNormal, FPlatformAffinity::GetPoolThreadMask());
+}
+
+void UTAEventManager::StartFlushTimer()
+{
+	m_GameInstance = GetGameInstance();
+	m_GameInstance->AddToRoot();
+	m_GameInstance->GetTimerManager().SetTimer(WorkHandle, this, &UTAEventManager::Flush, 15.0f, true);
 }
 
 void UTAEventManager::Flush()
@@ -162,8 +168,13 @@ UGameInstance* UTAEventManager::GetGameInstance()
 {
 	UGameInstance* GameInstance = nullptr;
 #if WITH_EDITOR
-	UUnrealEdEngine* engine = Cast<UUnrealEdEngine>(GEngine);
-	if (engine && engine->PlayWorld) GameInstance = engine->PlayWorld->GetGameInstance();
+	if(IsRunningGame()){
+		UGameEngine* engine = Cast<UGameEngine>(GEngine);
+		if (engine) GameInstance = engine->GameInstance;
+	}else{
+		UUnrealEdEngine* engine = Cast<UUnrealEdEngine>(GEngine);
+		if (engine && engine->PlayWorld) GameInstance = engine->PlayWorld->GetGameInstance();
+	}
 #else
 	UGameEngine* engine = Cast<UGameEngine>(GEngine);
 	if (engine) GameInstance = engine->GameInstance;

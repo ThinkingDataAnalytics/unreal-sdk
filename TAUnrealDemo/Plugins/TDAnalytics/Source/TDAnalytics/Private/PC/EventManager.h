@@ -30,6 +30,8 @@ public:
 
 	void BindInstance(UTDAnalyticsPC *Instance);
 
+	void StartFlushTimer();
+
 private:
 
 	~UTAEventManager();

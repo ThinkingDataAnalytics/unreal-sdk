@@ -60,6 +60,7 @@ void FTaskHandle::Exit()
 void FTaskHandle::AddTask(FString EventJsonStr)
 {
 	FTALog::Warning(CUR_LOG_POSITION, *FString::Printf(TEXT("AddTask %d"), TaskArray.Num()));
+	FScopeLock SetLock(&SetCritical);
 	TaskArray.Add(EventJsonStr);
 	IsPaused = false;
 }
@@ -93,11 +94,15 @@ void FTaskHandle::Flush()
 	{
 		if ( !m_Instance->ta_GetTrackState().Equals(FTAConstants::TRACK_STATUS_NORMAL) )
 		{
-			TaskArray.RemoveAt(0);
+			if ( TaskArray.Num() > 0 ){
+				TaskArray.RemoveAt(0);
+			}
 			return;
 		}
 		Working = true;
-		TaskArray.RemoveAt(0);
+		if ( TaskArray.Num() > 0 ){
+			TaskArray.RemoveAt(0);
+		}
 		if ( m_Instance->ta_GetMode() == TAMode::NORMAL )
 	    {
 	    	FlushFromLocalNormal();

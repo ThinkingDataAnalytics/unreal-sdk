@@ -21,8 +21,9 @@ void UTDAnalyticsPC::Initialize(const FString& AppID, const FString& ServerUrl, 
     {
 		return;
 	}
-	TDAnalyticsSingletons.Remove(AppID);
-	if ( TDAnalyticsSingletons.Find(AppID) == nullptr )
+	// TDAnalyticsSingletons.Remove(AppID);
+	UTDAnalyticsPC* Instance_Old = GetInstance(AppID);
+	if ( Instance_Old == nullptr )
     {
 		UTDAnalyticsPC* Instance = NewObject<UTDAnalyticsPC>();
 		Instance->Init(AppID, ServerUrl, Mode, TimeZone, Version);
@@ -43,6 +44,7 @@ void UTDAnalyticsPC::Initialize(const FString& AppID, const FString& ServerUrl, 
 	}
     else
     {
+		Instance_Old->m_EventManager->StartFlushTimer();
 		FTALog::Warning(CUR_LOG_POSITION, TEXT("Do not repeat initialization !"));
 	}
 }
