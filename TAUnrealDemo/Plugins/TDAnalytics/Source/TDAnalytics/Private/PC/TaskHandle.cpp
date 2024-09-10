@@ -111,6 +111,10 @@ void FTaskHandle::Flush()
 	    {
 	    	FlushFromLocalDebug(nullptr);
 	    }
+		else if (m_Instance->ta_GetMode() == TAMode::DEBUG_ONLY)
+		{
+			Working = false;
+		}
 	}
 }
 

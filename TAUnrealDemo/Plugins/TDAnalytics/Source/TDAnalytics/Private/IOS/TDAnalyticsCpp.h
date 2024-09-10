@@ -78,6 +78,10 @@ public:
 
     static void ta_set_superProperties(FString properties, FString appid = "");
 
+    static void ta_clear_superProperties(FString appid = "");
+
+    static void ta_unset_superProperty(FString property, FString appid = "");
+
     static void ta_set_trackStatus(FString status, FString appid= "");
 
     static FString ta_get_distinct_id(FString appid = "");

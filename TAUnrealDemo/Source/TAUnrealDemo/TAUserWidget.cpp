@@ -224,6 +224,8 @@ void UTAUserWidget::Call_TA_GetSuperProp(){
 
 
 void UTAUserWidget::Call_TA_TrackFirst(){
+    //UTDAnalytics::UnsetSuperProperty("static_super_property1");
+    //UTDAnalytics::ClearSuperProperties();
     UTDAnalytics::TrackFirst(TEXT("TrackFirst"), TEXT("{\"TrackFirst_key1\":\"TrackFirst_value1\"}"));
 }
 

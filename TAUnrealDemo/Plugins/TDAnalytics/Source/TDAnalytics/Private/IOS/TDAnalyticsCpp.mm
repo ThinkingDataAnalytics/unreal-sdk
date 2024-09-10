@@ -763,6 +763,25 @@ void TDAnalyticsCpp::ta_set_superProperties(FString properties, FString appid)
     }
 }
 
+void TDAnalyticsCpp::ta_clear_superProperties(FString appid) 
+{
+    ThinkingAnalyticsSDK *instance = getCurrentInstance(appid);
+    if ( instance ) 
+    {
+        [instance clearSuperProperties];
+    }
+}
+
+void TDAnalyticsCpp::ta_unset_superProperty(FString property, FString appid) 
+{
+    ThinkingAnalyticsSDK *instance = getCurrentInstance(appid);
+    if ( instance ) 
+    {
+        NSString *p_string = (*property != nullptr && !property.IsEmpty()) ? [NSString stringWithUTF8String:TCHAR_TO_UTF8(*property)] : nil;
+        [instance unsetSuperProperty:p_string];
+    }
+}
+
 void TDAnalyticsCpp::ta_set_trackStatus(FString status, FString appid)
 {
     ThinkingAnalyticsSDK *instance = getCurrentInstance(appid);

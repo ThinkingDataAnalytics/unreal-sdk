@@ -86,6 +86,10 @@ public:
 
 	void ta_SetSuperProperties(const FString& properties);
 
+	void ta_ClearSuperProperties();
+
+	void ta_UnsetSuperProperty(const FString& property);
+
 	void ta_SetTrackState(const FString& State);
 
 	void Track(const FString& EventName, const FString& Properties, const FString& DynamicProperties);

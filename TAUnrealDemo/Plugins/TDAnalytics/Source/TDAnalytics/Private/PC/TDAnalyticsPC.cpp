@@ -303,6 +303,25 @@ void UTDAnalyticsPC::ta_SetSuperProperties(const FString& properties)
 	SaveValue(this->m_SaveConfig);
 }
 
+void UTDAnalyticsPC::ta_ClearSuperProperties() {
+	this->m_SuperProperties = "{}";
+	this->m_SaveConfig->SetSuperProperties(this->m_SuperProperties);
+	SaveValue(this->m_SaveConfig);
+}
+
+void UTDAnalyticsPC::ta_UnsetSuperProperty(const FString& property) {
+	TSharedPtr<FJsonObject> FirstDataObject = MakeShareable(new FJsonObject);
+	TSharedRef<TJsonReader<>> FirstReader = TJsonReaderFactory<>::Create(this->m_SuperProperties);
+	FJsonSerializer::Deserialize(FirstReader, FirstDataObject);
+	FirstDataObject->RemoveField(property);
+	FString RetStr;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RetStr);
+	FJsonSerializer::Serialize(FirstDataObject.ToSharedRef(), Writer);
+	this->m_SuperProperties = RetStr;
+	this->m_SaveConfig->SetSuperProperties(this->m_SuperProperties);
+	SaveValue(this->m_SaveConfig);
+}
+
 void UTDAnalyticsPC::ta_SetTrackState(const FString& State)
 {
 	if ( State.Equals(FTAConstants::TRACK_STATUS_PAUSE) )

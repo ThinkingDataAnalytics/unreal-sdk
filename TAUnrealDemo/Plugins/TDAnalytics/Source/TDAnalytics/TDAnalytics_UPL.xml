@@ -433,6 +433,22 @@
                     mInstance.setSuperProperties(propertiesObj);
                }
             }
+			
+			public void taClearSuperProperties(String appid)
+			{
+			    ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+				if (null != mInstance) {
+                    mInstance.clearSuperProperties();
+               }
+			}
+			
+			public void taUnsetSuperProperty(String property, String appid)
+			{
+			    ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
+				if (null != mInstance) {
+                    mInstance.unsetSuperProperty(property);
+               }
+			}
             
             public String taGetSuperProperties(String appid)
             {

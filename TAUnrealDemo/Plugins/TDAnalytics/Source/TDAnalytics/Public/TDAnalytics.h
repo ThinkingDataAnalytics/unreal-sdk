@@ -174,6 +174,12 @@ public:
     static void SetSuperProperties(TSharedPtr<FJsonObject> Properties, const FString& AppId = "");
 
     UFUNCTION(BlueprintCallable, Category = "TDAnalytics")
+    static void ClearSuperProperties(const FString& AppId = "");
+
+    UFUNCTION(BlueprintCallable, Category = "TDAnalytics")
+    static void UnsetSuperProperty(const FString& property, const FString& AppId = "");
+
+    UFUNCTION(BlueprintCallable, Category = "TDAnalytics")
     static void SetTrackStatus(const FString& Status = "NORMAL", const FString& AppId = "");
 
     UFUNCTION(BlueprintCallable, Category = "TDAnalytics")

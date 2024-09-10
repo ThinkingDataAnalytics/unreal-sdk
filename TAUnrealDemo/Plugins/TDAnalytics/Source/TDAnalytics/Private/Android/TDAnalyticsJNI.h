@@ -85,6 +85,10 @@ namespace thinkinganalytics
 
         void jni_ta_set_superProperties(FString properties, FString appid);
 
+        void jni_ta_clear_superProperties(FString appid);
+
+        void jni_ta_unset_superProperty(FString property, FString appid);
+
         void jni_ta_set_trackStatus(FString status, FString appid);
 
         void jni_ta_setAutoTrackEventListener(TAAutoTrackEventRetValDelegate Del, const TArray<FString> EventTypeList, const FString& AppId);

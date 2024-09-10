@@ -519,6 +519,23 @@ namespace thinkinganalytics {
             jstring propertiesString = env->NewStringUTF(TCHAR_TO_UTF8(*properties));
             FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, setSuperProperties, propertiesString, appID);
         }
+
+        void jni_ta_clear_superProperties(FString appid)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+            jmethodID clearSuperProperties = FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taClearSuperProperties", "(Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, clearSuperProperties, appID);
+        }
+
+        void jni_ta_unset_superProperty(FString property, FString appid)
+        {
+            JNIEnv* env = FAndroidApplication::GetJavaEnv();
+            jmethodID unsetSuperProperty = FJavaWrapper::FindMethod(env, FJavaWrapper::GameActivityClassID, "taUnsetSuperProperty", "(Ljava/lang/String;Ljava/lang/String;)V", false);
+            jstring appID = env->NewStringUTF(TCHAR_TO_UTF8(*appid));
+            jstring propertyString = env->NewStringUTF(TCHAR_TO_UTF8(*property));
+            FJavaWrapper::CallVoidMethod(env, FJavaWrapper::GameActivityThis, unsetSuperProperty, propertyString, appID);
+        }
         
         FString jni_ta_get_superProperties(FString appid)
         {

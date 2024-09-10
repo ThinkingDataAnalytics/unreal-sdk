@@ -931,6 +931,46 @@ UE_LOG(TDAnalytics, Warning, TEXT("Unsupported Platform. Calling UTDAnalytics::S
  #endif
 }
 
+void UTDAnalytics::ClearSuperProperties(const FString& AppId) {
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_clear_superProperties(AppId);
+#elif PLATFORM_IOS
+    TDAnalyticsCpp::ta_clear_superProperties(AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
+    if (Instance == nullptr)
+    {
+        UE_LOG(TDAnalytics, Warning, TEXT("There is no Instance!"));
+    }
+    else
+    {
+        Instance->ta_ClearSuperProperties();
+    }
+#else
+    UE_LOG(TDAnalytics, Warning, TEXT("Unsupported Platform. Calling UTDAnalytics::ClearSuperProperties"));
+#endif
+}
+
+void UTDAnalytics::UnsetSuperProperty(const FString& property, const FString& AppId) {
+#if PLATFORM_ANDROID
+    thinkinganalytics::jni_ta_unset_superProperty(property,AppId);
+#elif PLATFORM_IOS
+    TDAnalyticsCpp::ta_unset_superProperty(property,AppId);
+#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
+    if (Instance == nullptr)
+    {
+        UE_LOG(TDAnalytics, Warning, TEXT("There is no Instance!"));
+}
+    else
+    {
+        Instance->ta_UnsetSuperProperty(property);
+    }
+#else
+    UE_LOG(TDAnalytics, Warning, TEXT("Unsupported Platform. Calling UTDAnalytics::UnsetSuperProperty"));
+#endif
+}
+
 void UTDAnalytics::SetTrackStatus(const FString& Status, const FString& AppId)
 {
 #if PLATFORM_ANDROID
