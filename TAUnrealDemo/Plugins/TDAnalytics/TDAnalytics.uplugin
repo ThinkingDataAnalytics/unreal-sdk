@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "2.0.5",
+	"VersionName": "2.0.6",
 	"FriendlyName": "TDAnalytics",
 	"Description": "Analytics Provider by Thinking Data",
 	"Category": "Analytics",

@@ -213,4 +213,24 @@ void FAnalyticsProviderTDAnalytics::RecordCurrencyGiven(const FString& GameCurre
 {
     UE_LOG(LogTDAnalytics, Warning, TEXT("FAnalyticsProviderTDAnalytics::RecordCurrencyGiven: Ignoring"));
 }
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4
+void FAnalyticsProviderTDAnalytics::SetDefaultEventAttributes(TArray<FAnalyticsEventAttribute>&& Attributes) {
+
+}
+TArray<FAnalyticsEventAttribute> FAnalyticsProviderTDAnalytics::GetDefaultEventAttributesSafe()const {
+
+    return TArray<FAnalyticsEventAttribute>();
+}
+int32 FAnalyticsProviderTDAnalytics::GetDefaultEventAttributeCount() const {
+
+    return 0;
+}
+
+FAnalyticsEventAttribute FAnalyticsProviderTDAnalytics::GetDefaultEventAttribute(int AttributeIndex)const {
+    FAnalyticsEventAttribute DefaultAttribute;
+    return DefaultAttribute;
+}
+#endif
+
 #undef LOCTEXT_NAMESPACE

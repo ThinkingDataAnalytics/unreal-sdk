@@ -7,7 +7,7 @@
 
 void UTAUserWidget::Call_TA_Init(){
     UTDAnalytics::Initialize();
-    AppID = TEXT("1b1c1fef65e3482bad5c9d0e6a823356");
+    AppID = TEXT("381f8bbad66c41a18923089321a1ba6f");
 }
 
 
