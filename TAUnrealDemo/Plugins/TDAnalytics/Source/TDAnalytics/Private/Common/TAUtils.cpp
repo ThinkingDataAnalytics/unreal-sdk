@@ -46,7 +46,7 @@ FString FTAUtils::FormatTimeWithOffset(FDateTime DateTime, float Zone_Offset)
 	int64 DateTimeUnixTimeStamp = DateTime.ToUnixTimestamp();
 	float CurrentOffset = (DateTimeUnixTimeStamp - FDateTime::UtcNow().ToUnixTimestamp()) / 3600.0;
 	//FTALog::Warning(CUR_LOG_POSITION, *FString::Printf(TEXT("=--= %f"), CurrentOffset));
-	int64 FormatDateTimeUnixTimeStamp = DateTimeUnixTimeStamp + 3600 * (Zone_Offset - CurrentOffset);
+	int64 FormatDateTimeUnixTimeStamp = DateTimeUnixTimeStamp + 360 * (int(Zone_Offset * 10) - int(CurrentOffset * 10));
 	return FDateTime::FromUnixTimestamp(FormatDateTimeUnixTimeStamp).ToString(TEXT("%Y-%m-%d %H:%M:%S.")) += *FString::Printf(TEXT("%03d"), DateTime.GetMillisecond());
 }
 

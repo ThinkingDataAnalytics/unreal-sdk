@@ -94,13 +94,13 @@ void FTaskHandle::Flush()
 	{
 		if ( !m_Instance->ta_GetTrackState().Equals(FTAConstants::TRACK_STATUS_NORMAL) )
 		{
-			if ( TaskArray.Num() > 0 ){
+			if (TaskArray.Num() > 0) {
 				TaskArray.RemoveAt(0);
 			}
 			return;
 		}
 		Working = true;
-		if ( TaskArray.Num() > 0 ){
+		if (TaskArray.Num() > 0) {
 			TaskArray.RemoveAt(0);
 		}
 		if ( m_Instance->ta_GetMode() == TAMode::NORMAL )

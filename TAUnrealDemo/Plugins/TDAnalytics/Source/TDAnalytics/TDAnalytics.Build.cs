@@ -8,6 +8,18 @@ namespace UnrealBuildTool.Rules
 {
     public class TDAnalytics : ModuleRules
     {
+        private void CopyToBinaries(string Filepath, /*TargetInfo*/ReadOnlyTargetRules Target)
+        {
+            string binariesDir = Path.Combine(ModuleDirectory, "../../../../Binaries/", Target.Platform.ToString());
+            string filename = Path.GetFileName(Filepath);
+
+            if (!Directory.Exists(binariesDir))
+                Directory.CreateDirectory(binariesDir);
+
+            if (!File.Exists(Path.Combine(binariesDir, filename)))
+                File.Copy(Filepath, Path.Combine(binariesDir, filename), true);
+        }
+
 #if WITH_FORWARDED_MODULE_RULES_CTOR
         public TDAnalytics(ReadOnlyTargetRules Target) : base(Target)
 #else
@@ -73,8 +85,8 @@ namespace UnrealBuildTool.Rules
                 "Projects"
             }
             );
-            
-            if (Target.Platform == UnrealTargetPlatform.IOS) 
+
+            if (Target.Platform == UnrealTargetPlatform.IOS)
             {
                 PublicAdditionalFrameworks.Add(
                     new Framework(
@@ -82,14 +94,37 @@ namespace UnrealBuildTool.Rules
                         "../ThirdParty/iOS/ThinkingSDK.embeddedframework.zip"
                     )
                 );
+
+                PublicAdditionalFrameworks.Add(
+                    new Framework(
+                        "ThinkingDataCore",
+                        "../ThirdParty/iOS/ThinkingDataCore.embeddedframework.zip"
+                    )
+                );
             }
-            else if(Target.Platform == UnrealTargetPlatform.Android)
+            else if (Target.Platform == UnrealTargetPlatform.Android)
             {
                 // Unreal Plugin Language
                 string PluginPath = Utils.MakePathRelativeTo(ModuleDirectory, Target.RelativeEnginePath);
                 AdditionalPropertiesForReceipt.Add("AndroidPlugin", System.IO.Path.Combine(PluginPath, "TDAnalytics_UPL.xml"));
                 // JNI
                 PublicIncludePathModuleNames.Add("Launch");
+            }
+            else if (Target.Platform == UnrealTargetPlatform.Win64) {
+                CopyToBinaries(Path.Combine(ModuleDirectory, "../ThirdParty/Windows", "Win64", "thinkingdata.dll"), Target);
+                CopyToBinaries(Path.Combine(ModuleDirectory, "../ThirdParty/Windows", "Win64", "sqlite3.dll"), Target);
+                CopyToBinaries(Path.Combine(ModuleDirectory, "../ThirdParty/Windows", "Win64", "zlibwapi.dll"), Target);
+                CopyToBinaries(Path.Combine(ModuleDirectory, "../ThirdParty/Windows", "Win64", "libcrypto-3-x64.dll"), Target);
+                CopyToBinaries(Path.Combine(ModuleDirectory, "../ThirdParty/Windows", "Win64", "libcurl.dll"), Target);
+                CopyToBinaries(Path.Combine(ModuleDirectory, "../ThirdParty/Windows", "Win64", "libssl-3-x64.dll"), Target);
+                CopyToBinaries(Path.Combine(ModuleDirectory, "../ThirdParty/Windows", "Win64", "CppWrapper.dll"), Target);
+                RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)", "thinkingdata.dll"));
+                RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)", "sqlite3.dll"));
+                RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)", "zlibwapi.dll"));
+                RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)", "libcrypto-3-x64.dll"));
+                RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)", "libcurl.dll"));
+                RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)", "libssl-3-x64.dll"));
+                RuntimeDependencies.Add(Path.Combine("$(TargetOutputDir)", "CppWrapper.dll"));
             }
         }
     }

@@ -439,7 +439,7 @@
 			    ThinkingAnalyticsSDK mInstance =  taGetCurrentInstance(appid);
 				if (null != mInstance) {
                     mInstance.clearSuperProperties();
-               }
+                }
 			}
 			
 			public void taUnsetSuperProperty(String property, String appid)

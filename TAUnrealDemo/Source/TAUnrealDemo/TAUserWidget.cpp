@@ -1,34 +1,60 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "TAUserWidget.h"
-
+#define ScreenLog(Param1) (ScreenLogT(Param1, 5))
+#define ScreenLogT(Param1, Param2)	(GEngine->AddOnScreenDebugMessage(-1, Param2, FColor::White, *( ": " + Param1)))
+#define ScreenWarn(Param1) (ScreenWarnT(Param1, 5))
+#define ScreenWarnT(Param1, Param2)	(GEngine->AddOnScreenDebugMessage(-1, Param2, FColor::Yellow, *( ": " + Param1)))
+#define ScreenError(Param1) (ScreenErrorT(Param1, 5))
+#define ScreenErrorT(Param1, Param2)	(GEngine->AddOnScreenDebugMessage(-1, Param2, FColor::Red, *(": " + Param1)))
 
 
 void UTAUserWidget::Call_TA_Init(){
+    int64 Timestamp1 = FDateTime::UtcNow().ToUnixTimestamp();
     UTDAnalytics::Initialize();
-    AppID = TEXT("381f8bbad66c41a18923089321a1ba6f");
+    int64 Timestamp2 = FDateTime::UtcNow().ToUnixTimestamp();
+    ScreenWarn(FString::Printf(TEXT("Initialize Total Time: %lld"), Timestamp2 -Timestamp1));
+    AppID = TEXT("1b1c1fef65e3482bad5c9d0e6a823356");
+    UTDAnalytics::Track("TEST_EVENT", TEXT("{\"key1\":\"我的\"}"), AppID);
+    UTDAnalytics::UserSet("{\"user_key1\":\"user_value1\"}", AppID);
+    /*FString DllPath = FPaths::Combine(FPaths::LaunchDir(), TEXT("thinkingdata.dll"));*/
+    /*UE_LOG(LogTemp, Log, TEXT("get disticid = %s"), *LogFilePath);*/
+    //FString DllPath = FPaths::Combine(FPaths::ProjectDir(), TEXT("thinkingdata.dll"));
 }
 
 
 void UTAUserWidget::Call_TA_Set_DistinctID(){
+    int64 Timestamp1 = FDateTime::UtcNow().ToUnixTimestamp();
     UTDAnalytics::SetDistinctId("distinct_id_1", AppID);
+    int64 Timestamp2 = FDateTime::UtcNow().ToUnixTimestamp();
+    ScreenWarn(FString::Printf(TEXT("SetDistinctId Total Time: %lld"), Timestamp2-Timestamp1));
 }
 
 
 void UTAUserWidget::Call_TA_Get_DistinctID(){
+    int64 Timestamp1 = FDateTime::UtcNow().ToUnixTimestamp();
     FString DistinctId = UTDAnalytics::GetDistinctId(AppID);
+    int64 Timestamp2 = FDateTime::UtcNow().ToUnixTimestamp();
+    ScreenWarn(FString::Printf(TEXT("SetDistinctId Total Time: %lld"), Timestamp2 - Timestamp1));
     UE_LOG(LogTemp, Log, TEXT("get disticid = %s"), *DistinctId);
+    ScreenWarn(FString::Printf(TEXT("DistinctId = %s"),*DistinctId));
 }
 
 
 void UTAUserWidget::Call_TA_Login(){
+    int64 Timestamp1 = FDateTime::UtcNow().ToUnixTimestamp();
     UTDAnalytics::Login("account_id_1", AppID);
+    int64 Timestamp2 = FDateTime::UtcNow().ToUnixTimestamp();
+    ScreenWarn(FString::Printf(TEXT("SetDistinctId Total Time: %lld"), Timestamp2 - Timestamp1));
 }
 
 
 void UTAUserWidget::Call_TA_Logout(){
+    int64 Timestamp1 = FDateTime::UtcNow().ToUnixTimestamp();
     UTDAnalytics::Logout(AppID);
+    int64 Timestamp2 = FDateTime::UtcNow().ToUnixTimestamp();
+    ScreenWarn(FString::Printf(TEXT("SetDistinctId Total Time: %lld"), Timestamp2 - Timestamp1));
 }
 
 
@@ -38,7 +64,11 @@ void UTAUserWidget::Call_TA_TrackEvent_Normal(){
 
 
 void UTAUserWidget::Call_TA_TrackEvent_With_Prop(){
-    UTDAnalytics::Track("TEST_EVENT", TEXT("{\"key1\":\"one\"}"), AppID);
+    //FString StringVariable = TEXT("你好，世界！");
+    //UE_LOG(LogTemp, Warning, TEXT("======1: %s"), *StringVariable);
+    //FText TextVariable = FText::FromString(TEXT("你好，世界！"));
+    //UE_LOG(LogTemp, Warning, TEXT("======2: %s"), *TextVariable.ToString());
+    UTDAnalytics::Track("TEST_EVENT", TEXT("{\"key1\":\"我的😊\"}"), AppID);
 }
 
 
@@ -168,9 +198,11 @@ void UTAUserWidget::Call_TA_Flush(){
 
 
 void UTAUserWidget::Call_TA_CalibrateTime(){
-    FDateTime Time = FDateTime::Now();
+    /*FDateTime Time = FDateTime::Now();
 
-    int64 Timestamp = Time.ToUnixTimestamp() * 1000 + Time.GetMillisecond();
+    int64 Timestamp = Time.ToUnixTimestamp() * 1000 + Time.GetMillisecond();*/
+
+    int64 Timestamp = 1718177121000;
 
     UTDAnalytics::CalibrateTime(Timestamp);
 }
@@ -224,8 +256,6 @@ void UTAUserWidget::Call_TA_GetSuperProp(){
 
 
 void UTAUserWidget::Call_TA_TrackFirst(){
-    //UTDAnalytics::UnsetSuperProperty("static_super_property1");
-    //UTDAnalytics::ClearSuperProperties();
     UTDAnalytics::TrackFirst(TEXT("TrackFirst"), TEXT("{\"TrackFirst_key1\":\"TrackFirst_value1\"}"));
 }
 

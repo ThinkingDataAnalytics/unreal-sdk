@@ -82,4 +82,5 @@ public:
     virtual int32 GetDefaultEventAttributeCount() const override;
     virtual FAnalyticsEventAttribute GetDefaultEventAttribute(int AttributeIndex) const override;
 #endif
+
 };

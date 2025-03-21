@@ -322,6 +322,7 @@ void UTDAnalyticsPC::ta_UnsetSuperProperty(const FString& property) {
 	SaveValue(this->m_SaveConfig);
 }
 
+
 void UTDAnalyticsPC::ta_SetTrackState(const FString& State)
 {
 	if ( State.Equals(FTAConstants::TRACK_STATUS_PAUSE) )

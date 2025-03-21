@@ -15,7 +15,9 @@
 #include "./Android/TDAnalyticsJNI.h"
 #elif PLATFORM_IOS
 #include "./IOS/TDAnalyticsCpp.h"
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+#include "./Windows/TDAnalyticsWindow.h"
+#elif PLATFORM_MAC
 #include "./PC/TDAnalyticsPC.h"
 #endif
 
@@ -41,7 +43,9 @@ void UTDAnalytics::Initialize()
     thinkinganalytics::jni_ta_initialize(defaultSettings, plugin->GetDescriptor().VersionName);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_initialize(defaultSettings, plugin->GetDescriptor().VersionName);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::Initialize(defaultSettings, plugin->GetDescriptor().VersionName);
+#elif PLATFORM_MAC
     UTDAnalyticsPC::Initialize(defaultSettings, plugin->GetDescriptor().VersionName);
 #else
     UE_LOG(TDAnalytics, Warning, TEXT("Calling Initialize... The platform is not supported. %d"), defaultSettings->Mode);
@@ -64,7 +68,9 @@ void UTDAnalytics::InitializeInstance(const FString& appid, const FString& serve
     thinkinganalytics::jni_ta_initializeInstance(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_initialize(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::Initialize(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName);
+#elif PLATFORM_MAC
     UTDAnalyticsPC::Initialize(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName);
 #else
     UE_LOG(TDAnalytics, Warning, TEXT("Calling Initialize... The platform is not supported. %d"), mode);
@@ -86,7 +92,9 @@ void UTDAnalytics::InitializeEncryptInstance(const FString& appid, const FString
     thinkinganalytics::jni_ta_initializeEncryptInstance(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName, bEnableEncrypt, EncryptPublicKey, EncryptVersion, SymmetricEncryption, AsymmetricEncryption);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_initializeEncryptInstance(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName, EncryptPublicKey, EncryptVersion, SymmetricEncryption, AsymmetricEncryption);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+
+#elif PLATFORM_MAC
     UTDAnalyticsPC::Initialize(appid, serverurl, mode, bEnableLog, timeZone, plugin->GetDescriptor().VersionName);
 #else
     UE_LOG(TDAnalytics, Warning, TEXT("Calling Initialize... The platform is not supported. %d"), mode);
@@ -151,7 +159,9 @@ void UTDAnalytics::Track(const FString& EventName, const FString& Properties, co
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track(EventName, Properties, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::Track(EventName, Properties);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -181,7 +191,9 @@ void UTDAnalytics::Track(const FString& EventName, TSharedPtr<FJsonObject> Prope
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track(EventName, PropertiesStr, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::Track(EventName, PropertiesStr);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -207,7 +219,9 @@ void UTDAnalytics::TrackFirst(const FString& EventName, const FString& Propertie
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first(EventName, Properties, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackFirst(EventName, Properties, TEXT(""));
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -237,7 +251,9 @@ void UTDAnalytics::TrackFirst(const FString& EventName, TSharedPtr<FJsonObject> 
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first(EventName, PropertiesStr, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackFirst(EventName, PropertiesStr, TEXT(""));
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -263,7 +279,9 @@ void UTDAnalytics::TrackFirstWithId(const FString& EventName, const FString& Pro
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first_withId(EventName, Properties, FirstCheckId, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackFirst(EventName, Properties,FirstCheckId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -293,7 +311,9 @@ void UTDAnalytics::TrackFirstWithId(const FString& EventName, TSharedPtr<FJsonOb
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first_withId(EventName, PropertiesStr, FirstCheckId, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackFirst(EventName, PropertiesStr, FirstCheckId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -319,7 +339,9 @@ void UTDAnalytics::TrackUpdate(const FString& EventName, const FString& Properti
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_update(EventName, Properties, EventId, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackUpdate(EventName,Properties,EventId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -349,7 +371,9 @@ void UTDAnalytics::TrackUpdate(const FString& EventName, TSharedPtr<FJsonObject>
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_update(EventName, PropertiesStr, EventId, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackUpdate(EventName, PropertiesStr, EventId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -375,7 +399,9 @@ void UTDAnalytics::TrackOverwrite(const FString& EventName, const FString& Prope
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_overwrite(EventName, Properties, EventId, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackOverwrite(EventName,Properties,EventId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -405,7 +431,9 @@ void UTDAnalytics::TrackOverwrite(const FString& EventName, TSharedPtr<FJsonObje
     FString appid = TDAnalyticsCpp::ta_getCurrentAppId(AppId);
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_overwrite(EventName, PropertiesStr, EventId, dyldproperties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TrackOverwrite(EventName, PropertiesStr, EventId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -427,6 +455,8 @@ void UTDAnalytics::TimeEvent(const FString& EventName, const FString& AppId)
     thinkinganalytics::jni_ta_time_event(EventName, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_time_event(EventName, AppId);
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::TimeEvent(EventName);
 #else
     UE_LOG(TDAnalytics, Warning, TEXT("Unsupported Platform. Calling UTDAnalytics::TimeEvent"));
 #endif
@@ -438,7 +468,9 @@ void UTDAnalytics::UserSet(const FString& Properties, const FString& AppId)
     thinkinganalytics::jni_ta_user_set(Properties, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_set(Properties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserSet(Properties);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -463,7 +495,9 @@ void UTDAnalytics::UserSet(TSharedPtr<FJsonObject> Properties, const FString& Ap
     thinkinganalytics::jni_ta_user_set(PropertiesStr, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_set(PropertiesStr, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserSet(PropertiesStr);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -484,7 +518,9 @@ void UTDAnalytics::UserSetOnce(const FString& Properties, const FString& AppId)
     thinkinganalytics::jni_ta_user_set_once(Properties, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_set_once(Properties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserSetOnce(Properties);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -509,7 +545,9 @@ void UTDAnalytics::UserSetOnce(TSharedPtr<FJsonObject> Properties, const FString
     thinkinganalytics::jni_ta_user_set_once(PropertiesStr, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_set_once(PropertiesStr, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserSetOnce(PropertiesStr);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -538,7 +576,9 @@ void UTDAnalytics::UserAdd(const FString& Property, const float Value, const FSt
     thinkinganalytics::jni_ta_user_add(outStr, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_add(outStr, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserAdd(outStr);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -559,7 +599,9 @@ void UTDAnalytics::UserUnset(const FString& Property, const FString& AppId)
     thinkinganalytics::jni_ta_user_unset(Property, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_unset(Property, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserUnset(Property);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -580,7 +622,9 @@ void UTDAnalytics::UserAppend(const FString& Properties, const FString& AppId)
     thinkinganalytics::jni_ta_user_append(Properties, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_append(Properties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserAppend(Properties);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -605,7 +649,9 @@ void UTDAnalytics::UserAppend(TSharedPtr<FJsonObject> Properties, const FString&
     thinkinganalytics::jni_ta_user_append(PropertiesStr, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_append(PropertiesStr, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserAppend(PropertiesStr);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -626,7 +672,9 @@ void UTDAnalytics::UserUniqueAppend(const FString& Properties, const FString& Ap
     thinkinganalytics::jni_ta_user_unique_append(Properties, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_unique_append(Properties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserUniqueAppend(Properties);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -651,7 +699,9 @@ void UTDAnalytics::UserUniqueAppend(TSharedPtr<FJsonObject> Properties, const FS
     thinkinganalytics::jni_ta_user_unique_append(PropertiesStr, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_unique_append(PropertiesStr, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserUniqueAppend(PropertiesStr);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -672,7 +722,9 @@ void UTDAnalytics::UserDelete(const FString& AppId)
     thinkinganalytics::jni_ta_user_delete(AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_user_delete(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::UserDelete();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -693,7 +745,9 @@ void UTDAnalytics::SetDistinctId(const FString& DistinctId, const FString& AppId
     thinkinganalytics::jni_ta_identify(DistinctId, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_identify(DistinctId, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::SetDistinctId(DistinctId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -714,7 +768,9 @@ void UTDAnalytics::Login(const FString& AccountId, const FString& AppId)
     thinkinganalytics::jni_ta_login(AccountId, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_login(AccountId, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::Login(AccountId);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -735,7 +791,9 @@ void UTDAnalytics::Logout(const FString& AppId)
     thinkinganalytics::jni_ta_logout(AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_logout(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::Logout();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -756,7 +814,9 @@ void UTDAnalytics::Flush(const FString& AppId)
     thinkinganalytics::jni_ta_flush(AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_flush(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::Flush();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -777,6 +837,8 @@ void UTDAnalytics::CalibrateTime(int64 timestamp)
     thinkinganalytics::jni_ta_calibrate_time(timestamp);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_calibrate_time(timestamp);
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::CalibrateTime(timestamp);
 #else
     UE_LOG(TDAnalytics, Warning, TEXT("Unsupported Platform. Calling UTDAnalytics::CalibrateTime"));
 #endif
@@ -821,7 +883,7 @@ void UTDAnalytics::EnableTracking(bool bIsEnable, const FString& AppId)
     thinkinganalytics::jni_ta_enable_tracking(bIsEnable, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_enable_tracking(bIsEnable, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -842,7 +904,9 @@ FString UTDAnalytics::GetDeviceId(const FString& AppId)
     return thinkinganalytics::jni_ta_get_device_id(AppId);
 #elif PLATFORM_IOS
     return TDAnalyticsCpp::ta_get_device_id(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    return UTDAnalyticsWindow::GetDeviceID();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -866,7 +930,9 @@ FString UTDAnalytics::GetDistinctId(const FString& AppId)
     return thinkinganalytics::jni_ta_get_distinct_id(AppId);
 #elif PLATFORM_IOS
     return TDAnalyticsCpp::ta_get_distinct_id(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    return UTDAnalyticsWindow::GetDistinctId();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -889,7 +955,9 @@ void UTDAnalytics::SetSuperProperties(const FString& properties, const FString& 
     thinkinganalytics::jni_ta_set_superProperties(properties, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_set_superProperties(properties, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::SetSuperProperties(properties);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -915,7 +983,9 @@ void UTDAnalytics::SetSuperProperties(TSharedPtr<FJsonObject> Properties, const 
     thinkinganalytics::jni_ta_set_superProperties(PropertiesStr, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_set_superProperties(PropertiesStr, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::SetSuperProperties(PropertiesStr);
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -936,7 +1006,9 @@ void UTDAnalytics::ClearSuperProperties(const FString& AppId) {
     thinkinganalytics::jni_ta_clear_superProperties(AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_clear_superProperties(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    UTDAnalyticsWindow::ClearSuperProperties();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if (Instance == nullptr)
     {
@@ -953,15 +1025,17 @@ void UTDAnalytics::ClearSuperProperties(const FString& AppId) {
 
 void UTDAnalytics::UnsetSuperProperty(const FString& property, const FString& AppId) {
 #if PLATFORM_ANDROID
-    thinkinganalytics::jni_ta_unset_superProperty(property,AppId);
+    thinkinganalytics::jni_ta_unset_superProperty(property, AppId);
 #elif PLATFORM_IOS
-    TDAnalyticsCpp::ta_unset_superProperty(property,AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+    TDAnalyticsCpp::ta_unset_superProperty(property, AppId);
+#elif PLATFORM_WINDOWS
+
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if (Instance == nullptr)
     {
         UE_LOG(TDAnalytics, Warning, TEXT("There is no Instance!"));
-}
+    }
     else
     {
         Instance->ta_UnsetSuperProperty(property);
@@ -971,13 +1045,14 @@ void UTDAnalytics::UnsetSuperProperty(const FString& property, const FString& Ap
 #endif
 }
 
+
 void UTDAnalytics::SetTrackStatus(const FString& Status, const FString& AppId)
 {
 #if PLATFORM_ANDROID
     thinkinganalytics::jni_ta_set_trackStatus(Status, AppId);
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_set_trackStatus(Status, AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -999,7 +1074,9 @@ FString UTDAnalytics::GetSuperProperties(const FString& AppId)
     return thinkinganalytics::jni_ta_get_superProperties(AppId);
 #elif PLATFORM_IOS
     return TDAnalyticsCpp::ta_get_superProperties(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    return UTDAnalyticsWindow::GetSuperProperties();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {
@@ -1022,7 +1099,9 @@ FString UTDAnalytics::GetPresetProperties(const FString& AppId)
     return thinkinganalytics::jni_ta_get_presetProperties(AppId);
 #elif PLATFORM_IOS
     return TDAnalyticsCpp::ta_get_presetProperties(AppId);
-#elif PLATFORM_MAC || PLATFORM_WINDOWS
+#elif PLATFORM_WINDOWS
+    return UTDAnalyticsWindow::GetPresetProperties();
+#elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
     {

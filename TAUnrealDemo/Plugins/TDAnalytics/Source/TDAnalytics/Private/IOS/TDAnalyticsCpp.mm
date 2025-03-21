@@ -3,7 +3,7 @@
 #ifndef PLATFORM_IOS
 #else
 #if PLATFORM_IOS
-#import <ThinkingSDK/ThinkingAnalyticsSDK.h>
+#import <ThinkingSDK/ThinkingSDK.h>
 //#import <ThinkingSDK/TDLogging.h>
 #import "TDAnalyticsCpp.h"
 #include <sstream>
@@ -781,6 +781,7 @@ void TDAnalyticsCpp::ta_unset_superProperty(FString property, FString appid)
         [instance unsetSuperProperty:p_string];
     }
 }
+
 
 void TDAnalyticsCpp::ta_set_trackStatus(FString status, FString appid)
 {

@@ -145,7 +145,7 @@ void UTAEventManager::BindInstance(UTDAnalyticsPC *Instance)
 	StartFlushTimer();
 
 	m_TaskHandle = new FTaskHandle(Instance);
-	m_RunnableThread = FRunnableThread::Create(m_TaskHandle, TEXT("TaskHandle"), 128 * 1024, TPri_AboveNormal, FPlatformAffinity::GetPoolThreadMask());
+	m_RunnableThread = FRunnableThread::Create(m_TaskHandle, TEXT("TaskHandle"), 128 * 1024, TPri_BelowNormal, FPlatformAffinity::GetPoolThreadMask());
 }
 
 void UTAEventManager::StartFlushTimer()
