@@ -15,7 +15,7 @@ void UTAUserWidget::Call_TA_Init(){
     UTDAnalytics::Initialize();
     int64 Timestamp2 = FDateTime::UtcNow().ToUnixTimestamp();
     ScreenWarn(FString::Printf(TEXT("Initialize Total Time: %lld"), Timestamp2 -Timestamp1));
-    AppID = TEXT("1b1c1fef65e3482bad5c9d0e6a823356");
+    AppID = TEXT("381f8bbad66c41a18923089321a1ba6f");
     UTDAnalytics::Track("TEST_EVENT", TEXT("{\"key1\":\"我的\"}"), AppID);
     UTDAnalytics::UserSet("{\"user_key1\":\"user_value1\"}", AppID);
     /*FString DllPath = FPaths::Combine(FPaths::LaunchDir(), TEXT("thinkingdata.dll"));*/

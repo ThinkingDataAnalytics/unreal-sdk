@@ -17,6 +17,7 @@
 #include "./IOS/TDAnalyticsCpp.h"
 #elif PLATFORM_WINDOWS
 #include "./Windows/TDAnalyticsWindow.h"
+#include "./Common/TAUtils.h"
 #elif PLATFORM_MAC
 #include "./PC/TDAnalyticsPC.h"
 #endif
@@ -149,6 +150,22 @@ void UTDAnalytics::EnableAutoTrackWithTypeAndProperties(const TArray<FString>& E
 #endif
 }
 
+FString UTDAnalytics::WindowsCombineDyldProperties(const FString& Properties, const FString& AppId) {
+#if PLATFORM_WINDOWS
+    FString appIDTemp;
+    if (AppId.IsEmpty()) {
+        appIDTemp = UTDAnalyticsWindow::getCurrentAppId();
+    } else {
+        appIDTemp = AppId;
+    }
+     FString Dyldproperties = UTDAnalytics::GetDynamicProperties(appIDTemp);
+     FString FinalProperties = FTAUtils::MergePropertiesWithOffset(Properties, Dyldproperties, FTAUtils::GetZoneOffset());
+     return FinalProperties;
+#else
+    return FString("");
+#endif
+}
+
 void UTDAnalytics::Track(const FString& EventName, const FString& Properties, const FString& AppId)
 {
 #if PLATFORM_ANDROID
@@ -160,7 +177,8 @@ void UTDAnalytics::Track(const FString& EventName, const FString& Properties, co
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track(EventName, Properties, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::Track(EventName, Properties);
+    FString FinalProperties = WindowsCombineDyldProperties(Properties, AppId);
+    UTDAnalyticsWindow::Track(EventName, FinalProperties);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -192,7 +210,8 @@ void UTDAnalytics::Track(const FString& EventName, TSharedPtr<FJsonObject> Prope
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track(EventName, PropertiesStr, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::Track(EventName, PropertiesStr);
+    FString FinalProperties = WindowsCombineDyldProperties(PropertiesStr, AppId);
+    UTDAnalyticsWindow::Track(EventName, FinalProperties);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -220,7 +239,8 @@ void UTDAnalytics::TrackFirst(const FString& EventName, const FString& Propertie
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first(EventName, Properties, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackFirst(EventName, Properties, TEXT(""));
+    FString FinalProperties = WindowsCombineDyldProperties(Properties, AppId);
+    UTDAnalyticsWindow::TrackFirst(EventName, FinalProperties, TEXT(""));
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -252,7 +272,8 @@ void UTDAnalytics::TrackFirst(const FString& EventName, TSharedPtr<FJsonObject> 
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first(EventName, PropertiesStr, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackFirst(EventName, PropertiesStr, TEXT(""));
+    FString FinalProperties = WindowsCombineDyldProperties(PropertiesStr, AppId);
+    UTDAnalyticsWindow::TrackFirst(EventName, FinalProperties, TEXT(""));
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -280,7 +301,8 @@ void UTDAnalytics::TrackFirstWithId(const FString& EventName, const FString& Pro
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first_withId(EventName, Properties, FirstCheckId, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackFirst(EventName, Properties,FirstCheckId);
+    FString FinalProperties = WindowsCombineDyldProperties(Properties, AppId);
+    UTDAnalyticsWindow::TrackFirst(EventName, FinalProperties,FirstCheckId);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -312,7 +334,8 @@ void UTDAnalytics::TrackFirstWithId(const FString& EventName, TSharedPtr<FJsonOb
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_first_withId(EventName, PropertiesStr, FirstCheckId, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackFirst(EventName, PropertiesStr, FirstCheckId);
+    FString FinalProperties = WindowsCombineDyldProperties(PropertiesStr, AppId);
+    UTDAnalyticsWindow::TrackFirst(EventName, FinalProperties, FirstCheckId);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -340,7 +363,8 @@ void UTDAnalytics::TrackUpdate(const FString& EventName, const FString& Properti
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_update(EventName, Properties, EventId, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackUpdate(EventName,Properties,EventId);
+    FString FinalProperties = WindowsCombineDyldProperties(Properties, AppId);
+    UTDAnalyticsWindow::TrackUpdate(EventName, FinalProperties,EventId);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -372,7 +396,8 @@ void UTDAnalytics::TrackUpdate(const FString& EventName, TSharedPtr<FJsonObject>
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_update(EventName, PropertiesStr, EventId, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackUpdate(EventName, PropertiesStr, EventId);
+    FString FinalProperties = WindowsCombineDyldProperties(PropertiesStr, AppId);
+    UTDAnalyticsWindow::TrackUpdate(EventName, FinalProperties, EventId);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -400,7 +425,8 @@ void UTDAnalytics::TrackOverwrite(const FString& EventName, const FString& Prope
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_overwrite(EventName, Properties, EventId, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackOverwrite(EventName,Properties,EventId);
+    FString FinalProperties = WindowsCombineDyldProperties(Properties, AppId);
+    UTDAnalyticsWindow::TrackOverwrite(EventName, FinalProperties,EventId);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -432,7 +458,8 @@ void UTDAnalytics::TrackOverwrite(const FString& EventName, TSharedPtr<FJsonObje
     FString dyldproperties = UTDAnalytics::GetDynamicProperties(appid);
     TDAnalyticsCpp::ta_track_overwrite(EventName, PropertiesStr, EventId, dyldproperties, AppId);
 #elif PLATFORM_WINDOWS
-    UTDAnalyticsWindow::TrackOverwrite(EventName, PropertiesStr, EventId);
+    FString FinalProperties = WindowsCombineDyldProperties(PropertiesStr, AppId);
+    UTDAnalyticsWindow::TrackOverwrite(EventName, FinalProperties, EventId);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if ( Instance == nullptr )
@@ -1029,7 +1056,7 @@ void UTDAnalytics::UnsetSuperProperty(const FString& property, const FString& Ap
 #elif PLATFORM_IOS
     TDAnalyticsCpp::ta_unset_superProperty(property, AppId);
 #elif PLATFORM_WINDOWS
-
+    UTDAnalyticsWindow::UnsetSuperProperty(property);
 #elif PLATFORM_MAC
     UTDAnalyticsPC* Instance = UTDAnalyticsPC::GetInstance(AppId);
     if (Instance == nullptr)

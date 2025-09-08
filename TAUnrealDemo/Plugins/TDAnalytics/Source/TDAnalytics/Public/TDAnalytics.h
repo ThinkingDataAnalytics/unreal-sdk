@@ -44,6 +44,7 @@ private:
 
     static void TASetAutoTrackEventListener(TAAutoTrackEventRetValDelegate Del, const TArray<FString>& EventTypeList, const FString& AppId = "");
 
+    static FString WindowsCombineDyldProperties(const FString& Properties, const FString& AppId = "");
 
 public:
     // 初始化方法

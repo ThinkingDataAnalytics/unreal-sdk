@@ -39,6 +39,7 @@ public:
 	static void TrackOverwrite(const FString& EventName, const FString& Properties, const FString& EventId);
 	static FString GetPresetProperties();
 	static void InitWithConfig(TDWindowsSetting Setting);
+	static FString getCurrentAppId();
 private:
 	~UTDAnalyticsWindow();
 	//static void InitWithConfig(const FString& AppID, const FString& ServerUrl, TAMode Mode, bool EnableLog, const FString& TimeZone, bool EnableEncrypt, int EncryptVersion, const FString& EncryptPublicKey);

@@ -16,6 +16,7 @@ UTDAnalyticsWindow::~UTDAnalyticsWindow()
 
 static void* TDDllHandle;
 static FThreadSafeBool isInitSuccess = false;
+static FString CurrentAppId = "";
 
 TQueue<TFunction<void()>> FunctionQueue;
 
@@ -69,6 +70,10 @@ void UTDAnalyticsWindow::Initialize(const FString& AppID, const FString& ServerU
     }
 }
 
+FString UTDAnalyticsWindow::getCurrentAppId() {
+    return CurrentAppId;
+}
+
 void UTDAnalyticsWindow::InitWithConfig(const TDWindowsSetting Setting) {
     typedef bool(*InitWrapperFunc)(const char*, const char*, bool, int, const char*, int, int, int, const char*);
     InitWrapperFunc InitWrapper = (InitWrapperFunc)FPlatformProcess::GetDllExport(TDDllHandle, TEXT("InitWrapper"));
@@ -85,6 +90,7 @@ void UTDAnalyticsWindow::InitWithConfig(const TDWindowsSetting Setting) {
         if (result) {
             FTALog::Info(CUR_LOG_POSITION, TEXT("UTDAnalytics Windows Initialize Success !"));
             isInitSuccess = true;
+            CurrentAppId = *Setting.AppId;
             TFunction<void()> Func;
             while (FunctionQueue.Dequeue(Func))
             {
@@ -403,7 +409,7 @@ void UTDAnalyticsWindow::UnsetSuperProperty(const FString& Property) {
     }
     else {
         FunctionQueue.Enqueue([Property]() {
-            UTDAnalyticsWindow::SetSuperProperties(Property);
+            UTDAnalyticsWindow::UnsetSuperProperty(Property);
             });
     }
 }
