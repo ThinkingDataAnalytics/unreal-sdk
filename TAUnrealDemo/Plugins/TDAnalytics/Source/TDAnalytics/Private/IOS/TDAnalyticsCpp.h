@@ -72,7 +72,7 @@ public:
 
     static void ta_opt_in_tracking(FString appid = "");
 
-    static void ta_enable_tracking(BOOL enabled, FString appid = "");
+    static void ta_enable_tracking(bool enabled, FString appid = "");
 
     static void ta_calibrate_time_ntp(FString urlstring);
 

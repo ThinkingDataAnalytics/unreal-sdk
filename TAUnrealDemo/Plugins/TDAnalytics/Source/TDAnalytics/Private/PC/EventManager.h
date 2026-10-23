@@ -1,6 +1,7 @@
 // Copyright 2021 ThinkingData. All Rights Reserved.
 #pragma once
 
+#include "Engine/GameInstance.h"
 #include "EventManager.generated.h"
 
 static TMap<FString, TArray<TSharedPtr<FJsonObject>>> TAEventSendMap;
@@ -32,15 +33,22 @@ public:
 
 	void StartFlushTimer();
 
+	void StopFlushTimer();
+
 private:
 
 	~UTAEventManager();
 
 	UGameInstance* GetGameInstance();
 
+#if WITH_EDITOR
+	void HandlePrePIEEnded(const bool bIsSimulating);
+	FDelegateHandle PrePIEEndedHandle;
+#endif
+
 	FTaskHandle* m_TaskHandle;
 
-	UGameInstance* m_GameInstance;
+	TWeakObjectPtr<UGameInstance> m_GameInstance;
 
 	FRunnableThread* m_RunnableThread;
 

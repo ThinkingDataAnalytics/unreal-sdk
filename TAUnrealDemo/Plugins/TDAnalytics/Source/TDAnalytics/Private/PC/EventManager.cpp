@@ -6,6 +6,7 @@
 #include "TDAnalyticsPC.h"
 
 #if WITH_EDITOR
+#include "Editor.h"
 #include "Editor/EditorEngine.h"
 #include "Editor/UnrealEdEngine.h"
 #include "Engine/GameEngine.h"
@@ -20,7 +21,14 @@ UTAEventManager::UTAEventManager()
 
 UTAEventManager::~UTAEventManager()
 {
-	// FTALog::Warning(CUR_LOG_POSITION, *FString::Printf(TEXT(" ~UTAEventManager ")));
+#if WITH_EDITOR
+	if (PrePIEEndedHandle.IsValid())
+	{
+		FEditorDelegates::PrePIEEnded.Remove(PrePIEEndedHandle);
+		PrePIEEndedHandle.Reset();
+	}
+#endif
+	StopFlushTimer();
 }
 
 void UTAEventManager::EnqueueUserEvent(const FString& EventType, const FString& Properties)
@@ -140,6 +148,12 @@ void UTAEventManager::EnqueueTrackEvent(const FString& EventName, const FString&
 void UTAEventManager::BindInstance(UTDAnalyticsPC *Instance)
 {
 	m_Instance = Instance;
+#if WITH_EDITOR
+	if (!PrePIEEndedHandle.IsValid())
+	{
+		PrePIEEndedHandle = FEditorDelegates::PrePIEEnded.AddUObject(this, &UTAEventManager::HandlePrePIEEnded);
+	}
+#endif
 	//start timer
 	//event num & time
 	StartFlushTimer();
@@ -148,12 +162,37 @@ void UTAEventManager::BindInstance(UTDAnalyticsPC *Instance)
 	m_RunnableThread = FRunnableThread::Create(m_TaskHandle, TEXT("TaskHandle"), 128 * 1024, TPri_BelowNormal, FPlatformAffinity::GetPoolThreadMask());
 }
 
+void UTAEventManager::StopFlushTimer()
+{
+	if (UGameInstance* GameInstance = m_GameInstance.Get())
+	{
+		if (GameInstance->GetWorld())
+		{
+			GameInstance->GetTimerManager().ClearTimer(WorkHandle);
+		}
+	}
+	m_GameInstance.Reset();
+}
+
 void UTAEventManager::StartFlushTimer()
 {
-	m_GameInstance = GetGameInstance();
-	m_GameInstance->AddToRoot();
-	m_GameInstance->GetTimerManager().SetTimer(WorkHandle, this, &UTAEventManager::Flush, 15.0f, true);
+	// PIE GameInstance must not be AddToRoot()'d. EndPlayMap marks it garbage and asserts !IsRooted().
+	StopFlushTimer();
+	UGameInstance* GameInstance = GetGameInstance();
+	if (!GameInstance || !GameInstance->GetWorld())
+	{
+		return;
+	}
+	m_GameInstance = GameInstance;
+	GameInstance->GetTimerManager().SetTimer(WorkHandle, this, &UTAEventManager::Flush, 15.0f, true);
 }
+
+#if WITH_EDITOR
+void UTAEventManager::HandlePrePIEEnded(const bool bIsSimulating)
+{
+	StopFlushTimer();
+}
+#endif
 
 void UTAEventManager::Flush()
 {

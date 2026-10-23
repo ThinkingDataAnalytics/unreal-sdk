@@ -67,7 +67,11 @@ void UTASaveEvent::RemoveEvents(uint32 Count)
 	{
 		RealCount = Count;
 	}
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4)
+	TempArray.RemoveAt(0, RealCount, EAllowShrinking::Yes);
+#else
 	TempArray.RemoveAt(0, RealCount, true);
+#endif
 
 	FString TempContent;
 	for (int i = 0; i < TempArray.Num(); i++)

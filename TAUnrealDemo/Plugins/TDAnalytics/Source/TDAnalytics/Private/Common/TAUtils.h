@@ -15,7 +15,11 @@
 #include "Misc/Guid.h"
 #include "Misc/Paths.h"
 #include "Misc/FileHelper.h"
+#if ENGINE_MAJOR_VERSION >= 5
+#include "HAL/PlatformFileManager.h"
+#else
 #include "HAL/PlatformFilemanager.h"
+#endif
 #include "SocketSubsystem.h"
 #include "IAnalyticsProviderET.h"
 #include "EngineAnalytics.h"
@@ -30,7 +34,7 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 
-class FTAUtils 
+class TDANALYTICS_API FTAUtils 
 {
 public:
 

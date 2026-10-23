@@ -77,7 +77,7 @@
             
                 ThinkingAnalyticsSDK mInstance = (ThinkingAnalyticsSDK)sInstances.get(appId);
                 if (mInstance == null) {
-                    ThinkingAnalyticsSDK.setCustomerLibInfo("Unreal", version);
+                    TDAnalytics.setCustomerLibInfo("Unreal", version);
                     TDConfig config = TDConfig.getInstance((Application) getApplicationContext(), appId, serverUrl);
                     setDisableProperties();
                     if (mode == 1) {
@@ -101,7 +101,7 @@
             
                 ThinkingAnalyticsSDK mInstance = (ThinkingAnalyticsSDK)sInstances.get(appId);
                 if (mInstance == null) {
-                    ThinkingAnalyticsSDK.setCustomerLibInfo("Unreal", version);
+                    TDAnalytics.setCustomerLibInfo("Unreal", version);
                     TDConfig config = TDConfig.getInstance((Application) getApplicationContext(), appId, serverUrl);
                     setDisableProperties();
                     if (mode == 1) {
@@ -415,9 +415,19 @@
                 return "";
             }
 
+            public void taCalibrateTime(long timestamp)
+            {
+                TDAnalytics.calibrateTime(timestamp);
+            }
+
+            public void taEnableLog()
+            {
+                TDAnalytics.enableLog(true);
+            }
+
             public void taCalibrateTimeWithNtp(String ntpServer)
             {
-                ThinkingAnalyticsSDK.calibrateTimeWithNtp(ntpServer);
+                TDAnalytics.calibrateTimeWithNtp(ntpServer);
             }
             
             public void taSetSuperProperties(String properties, String appid)

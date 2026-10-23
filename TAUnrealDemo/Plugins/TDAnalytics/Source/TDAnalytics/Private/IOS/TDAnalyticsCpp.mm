@@ -674,7 +674,7 @@ void TDAnalyticsCpp::ta_opt_in_tracking(FString appid)
     }
 }
 
-void TDAnalyticsCpp::ta_enable_tracking(BOOL enabled, FString appid)
+void TDAnalyticsCpp::ta_enable_tracking(bool enabled, FString appid)
 {
     ThinkingAnalyticsSDK *instance = getCurrentInstance(appid);
     if ( instance ) 
